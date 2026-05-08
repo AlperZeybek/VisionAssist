@@ -27,6 +27,8 @@ class SpeechService {
   private speechPitch: number = 1.0;
   private language: string = 'tr-TR';
   private enabled: boolean = true;
+  private consecutiveErrors: number = 0;
+  private ttsDisabledDueToErrors: boolean = false;
 
   // Aynı mesajın minimum tekrar aralığı (ms)
   private messageCooldown: number = 2000;
@@ -44,23 +46,13 @@ class SpeechService {
     priority: RiskLevel = RiskLevel.MEDIUM
   ): Promise<void> {
     if (!this.enabled) return;
+    if (this.ttsDisabledDueToErrors) return;
 
-    // Aynı mesaj cooldown kontrolü
-    if (
-      message === this.lastSpokenMessage &&
-      Date.now() - this.lastSpokenTime < this.messageCooldown
-    ) {
-      return;
-    }
+    // Konuşma sürerken gelen yeni mesajları ASLA kesme — sadece düşür
+    if (this.isSpeaking) return;
 
-    // Yüksek öncelikli mesaj mevcut konuşmayı durdurur
-    if (priority === RiskLevel.HIGH && this.isSpeaking) {
-      await this.stop();
-    }
-
-    // Kuyruğa ekle veya doğrudan konuştur
-    if (this.isSpeaking && priority !== RiskLevel.HIGH) {
-      this.addToQueue(message, priority);
+    // Genel mesaj aralığı (herhangi iki mesaj arası)
+    if (Date.now() - this.lastSpokenTime < this.messageCooldown) {
       return;
     }
 
@@ -70,14 +62,13 @@ class SpeechService {
   /**
    * Mesajı hemen konuşturur.
    */
-  private async speakNow(message: string): Promise<void> {
+  private async speakNow(message: string, useFallback: boolean = false): Promise<void> {
     this.isSpeaking = true;
     this.lastSpokenMessage = message;
     this.lastSpokenTime = Date.now();
 
     return new Promise<void>((resolve) => {
-      Speech.speak(message, {
-        language: this.language,
+      const options: Speech.SpeechOptions = {
         rate: this.speechRate,
         pitch: this.speechPitch,
         onStart: () => {
@@ -85,20 +76,44 @@ class SpeechService {
         },
         onDone: () => {
           this.isSpeaking = false;
+          this.consecutiveErrors = 0;
           this.processQueue();
           resolve();
         },
         onError: (error) => {
-          console.warn('[SpeechService] Konuşma hatası:', error);
+          const errMsg = (error && (error as Error).message) || JSON.stringify(error);
           this.isSpeaking = false;
-          this.processQueue();
-          resolve();
+          this.consecutiveErrors += 1;
+          if (this.consecutiveErrors >= 5) {
+            if (!this.ttsDisabledDueToErrors) {
+              console.warn(
+                '[SpeechService] Çok fazla TTS hatası — ses devre dışı bırakıldı. Cihazda TTS motoru kurulu olmayabilir.'
+              );
+            }
+            this.ttsDisabledDueToErrors = true;
+            this.queue = [];
+            resolve();
+            return;
+          }
+          console.warn('[SpeechService] Konuşma hatası:', errMsg);
+          if (!useFallback) {
+            this.speakNow(message, true).finally(() => resolve());
+          } else {
+            this.processQueue();
+            resolve();
+          }
         },
         onStopped: () => {
           this.isSpeaking = false;
           resolve();
         },
-      });
+      };
+
+      if (!useFallback) {
+        options.language = this.language;
+      }
+
+      Speech.speak(message, options);
     });
   }
 

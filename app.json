@@ -30,7 +30,8 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.akcasoft.VisionAssist"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -48,12 +49,14 @@
           "cameraPermissionText": "VisionAssist engelleri tespit etmek için kameranıza erişim gerektirir.",
           "enableMicrophonePermission": false
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "extra": {
       "eas": {
-        "projectId": "0582677f-d2a4-42ce-9091-a8050cda807e"
+        "projectId": "1e452296-d0f4-4c48-a7c3-4f2d3bf2f16a"
       }
-    }
+    },
+    "owner": "akcasoft"
   }
 }

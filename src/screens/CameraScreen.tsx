@@ -5,7 +5,7 @@ import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, StatusBar, Dimensions
 } from 'react-native';
-import { Camera, useCameraDevice, useCameraFormat } from 'react-native-vision-camera';
+import { Camera, useCameraDevice } from 'react-native-vision-camera';
 
 import { useCamera } from '../hooks/useCamera';
 import { useMLModel } from '../hooks/useMLModel';
@@ -22,11 +22,7 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function CameraScreen() {
   const device = useCameraDevice('back');
-  const format = useCameraFormat(device, [
-    { videoResolution: { width: 1280, height: 720 } },
-    { fps: 30 }
-  ]);
-  
+
   const { hasPermission, requestPermission, isRequesting } = useCamera();
   const { settings, currentMode } = useAppContext();
   const [isActive, setIsActive] = useState(false);
@@ -116,9 +112,10 @@ export default function CameraScreen() {
           style={StyleSheet.absoluteFill}
           device={device}
           isActive={true}
-          format={format}
           frameProcessor={frameProcessor}
-          pixelFormat="rgb" // TFLite modeli için en sağlıklısı
+          video={true}
+          audio={false}
+          pixelFormat="yuv"
         />
 
         {/* Engel Overlay */}
