@@ -1,17 +1,20 @@
 /**
  * VisionAssist - Ana Ekran
- * 
+ *
  * Kullanıcının uygulamayı açtığında gördüğü ilk ekran.
  * Büyük, erişilebilir butonlarla minimal etkileşim sağlar.
- * 
+ *
  * Görme engelli kullanıcılar için tasarlanmıştır:
  * - Minimum buton sayısı
  * - Büyük dokunma alanları
  * - Yüksek kontrast
  * - Ekran okuyucu uyumlu
+ *
+ * Navigasyon modu seçildiğinde otomatik olarak hedef seçim ekranını
+ * açar. Aktif rota varsa kullanıcıya hatırlatma kartı gösterir.
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -21,24 +24,46 @@ import {
   ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AccessibleButton from '../components/AccessibleButton';
 import ModeSelector from '../components/ModeSelector';
 import { useAppContext } from '../context/AppContext';
+import { useNavigationContext } from '../context/NavigationContext';
 import { COLORS, FONT_SIZES, SPACING } from '../utils/constants';
+import { DetectionMode } from '../utils/types';
 
-type TabParamList = {
-  Ana: undefined;
-  Algılama: undefined;
-  Ayarlar: undefined;
+type RootStackParamList = {
+  MainTabs: { screen?: string } | undefined;
+  DestinationPicker: undefined;
 };
 
 export default function HomeScreen() {
-  const navigation = useNavigation<BottomTabNavigationProp<TabParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { currentMode, setCurrentMode, settings } = useAppContext();
+  const { route, isGuiding, stopNavigation, remainingDistanceMeters } =
+    useNavigationContext();
+
+  // Mod NAVIGATION'a geçildiğinde otomatik picker aç
+  const prevModeRef = useRef<DetectionMode>(currentMode);
+  useEffect(() => {
+    if (
+      prevModeRef.current !== DetectionMode.NAVIGATION &&
+      currentMode === DetectionMode.NAVIGATION &&
+      !route
+    ) {
+      navigation.navigate('DestinationPicker');
+    }
+    prevModeRef.current = currentMode;
+  }, [currentMode, route, navigation]);
 
   const handleStartDetection = () => {
-    navigation.navigate('Algılama');
+    // Navigasyon modu + hedef yoksa picker'a yönlendir
+    if (currentMode === DetectionMode.NAVIGATION && !route) {
+      navigation.navigate('DestinationPicker');
+      return;
+    }
+    navigation.navigate('MainTabs', { screen: 'Algılama' });
   };
 
   return (
@@ -62,13 +87,51 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* Ana Buton - Algılamayı Başlat */}
+        {/* Aktif Navigasyon Kartı */}
+        {isGuiding && route && (
+          <View
+            style={styles.activeNavCard}
+            accessible={true}
+            accessibilityRole="summary"
+            accessibilityLabel={`Aktif navigasyon: ${route.destination.shortName}, kalan ${Math.round(
+              remainingDistanceMeters
+            )} metre`}
+          >
+            <Text style={styles.activeNavIcon}>🧭</Text>
+            <Text style={styles.activeNavTitle} numberOfLines={1}>
+              {route.destination.shortName}
+            </Text>
+            <Text style={styles.activeNavDetail}>
+              Kalan: {(remainingDistanceMeters / 1000).toFixed(2)} km
+            </Text>
+            <AccessibleButton
+              label="Navigasyonu Durdur"
+              onPress={stopNavigation}
+              icon="🛑"
+              variant="danger"
+              fullWidth
+              accessibilityHint="Aktif yol tarifini sonlandırır"
+            />
+          </View>
+        )}
+
+        {/* Ana Buton */}
         <View style={styles.mainAction}>
           <AccessibleButton
-            label="Algılamayı Başlat"
+            label={
+              currentMode === DetectionMode.NAVIGATION && !route
+                ? 'Hedef Seç ve Başla'
+                : 'Algılamayı Başlat'
+            }
             onPress={handleStartDetection}
-            accessibilityHint="Kamerayı açarak engel algılamaya başlar"
-            icon="📸"
+            accessibilityHint={
+              currentMode === DetectionMode.NAVIGATION && !route
+                ? 'Hedef seçim ekranını açar'
+                : 'Kamerayı açarak engel algılamaya başlar'
+            }
+            icon={
+              currentMode === DetectionMode.NAVIGATION && !route ? '🧭' : '📸'
+            }
             variant="primary"
             fullWidth
             large
@@ -101,7 +164,7 @@ export default function HomeScreen() {
             <View style={styles.infoContent}>
               <Text style={styles.infoTitle}>Çevrimdışı Çalışır</Text>
               <Text style={styles.infoDescription}>
-                İnternet bağlantısı gerektirmez
+                Engel algılama internet bağlantısı gerektirmez
               </Text>
             </View>
           </View>
@@ -111,7 +174,7 @@ export default function HomeScreen() {
             <View style={styles.infoContent}>
               <Text style={styles.infoTitle}>Gerçek Zamanlı</Text>
               <Text style={styles.infoDescription}>
-                Dil: {settings.language === 'tr' ? 'Türkçe' : 'İngilizce'} | 
+                Dil: {settings.language === 'tr' ? 'Türkçe' : 'İngilizce'} |
                 Aralık: {settings.detectionInterval}ms
               </Text>
             </View>
@@ -122,7 +185,7 @@ export default function HomeScreen() {
         <View style={styles.bottomAction}>
           <AccessibleButton
             label="Ayarlar"
-            onPress={() => navigation.navigate('Ayarlar')}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Ayarlar' })}
             accessibilityHint="Uygulama ayarlarını açar"
             icon="⚙️"
             variant="secondary"
@@ -135,23 +198,14 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
   content: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.xl,
     paddingBottom: SPACING.xxl,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: SPACING.xl,
-  },
-  appIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
-  },
+  header: { alignItems: 'center', marginBottom: SPACING.xl },
+  appIcon: { fontSize: 64, marginBottom: SPACING.md },
   title: {
     fontSize: FONT_SIZES.title,
     fontWeight: '800',
@@ -164,22 +218,36 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: SPACING.xs,
   },
-  mainAction: {
-    marginBottom: SPACING.xl,
+  activeNavCard: {
+    backgroundColor: COLORS.primaryDark,
+    borderRadius: 16,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
-  section: {
-    marginBottom: SPACING.xl,
+  activeNavIcon: { fontSize: 36 },
+  activeNavTitle: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZES.large,
+    fontWeight: '800',
+    textAlign: 'center',
   },
+  activeNavDetail: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZES.medium,
+    fontWeight: '600',
+    marginBottom: SPACING.sm,
+  },
+  mainAction: { marginBottom: SPACING.xl },
+  section: { marginBottom: SPACING.xl },
   sectionTitle: {
     fontSize: FONT_SIZES.large,
     fontWeight: '700',
     color: COLORS.textPrimary,
     marginBottom: SPACING.md,
   },
-  infoSection: {
-    gap: SPACING.md,
-    marginBottom: SPACING.xl,
-  },
+  infoSection: { gap: SPACING.md, marginBottom: SPACING.xl },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -189,13 +257,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  infoIcon: {
-    fontSize: 32,
-    marginRight: SPACING.md,
-  },
-  infoContent: {
-    flex: 1,
-  },
+  infoIcon: { fontSize: 32, marginRight: SPACING.md },
+  infoContent: { flex: 1 },
   infoTitle: {
     fontSize: FONT_SIZES.medium,
     fontWeight: '700',
@@ -206,7 +269,5 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 2,
   },
-  bottomAction: {
-    marginTop: SPACING.md,
-  },
+  bottomAction: { marginTop: SPACING.md },
 });

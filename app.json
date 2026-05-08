@@ -15,7 +15,9 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "VisionAssist engelleri tespit etmek için kameranıza erişim gerektirir.",
-        "NSSpeechRecognitionUsageDescription": "VisionAssist sesli rehberlik sağlamak için konuşma erişimi gerektirir."
+        "NSSpeechRecognitionUsageDescription": "VisionAssist sesli rehberlik sağlamak için konuşma erişimi gerektirir.",
+        "NSLocationWhenInUseUsageDescription": "VisionAssist navigasyon ve sesli yön tarifi için konumunuza erişim gerektirir.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "VisionAssist yürüyüş sırasında sesli yön tarifi için konum erişimi gerektirir."
       }
     },
     "android": {
@@ -28,7 +30,9 @@
       "permissions": [
         "CAMERA",
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "predictiveBackGestureEnabled": false,
       "package": "com.akcasoft.VisionAssist"
@@ -48,6 +52,12 @@
         {
           "cameraPermissionText": "VisionAssist engelleri tespit etmek için kameranıza erişim gerektirir.",
           "enableMicrophonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "VisionAssist sesli yön tarifi için konumunuza erişim gerektirir."
         }
       ],
       "expo-asset"

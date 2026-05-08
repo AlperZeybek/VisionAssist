@@ -3,7 +3,7 @@
  */
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, StatusBar, Dimensions
+  View, Text, StyleSheet, SafeAreaView, StatusBar, Dimensions, TouchableOpacity
 } from 'react-native';
 import { Camera, useCameraDevice } from 'react-native-vision-camera';
 
@@ -11,6 +11,7 @@ import { useCamera } from '../hooks/useCamera';
 import { useMLModel } from '../hooks/useMLModel';
 import { useVisionAssistFrameProcessor } from '../hooks/useVisionAssistFrameProcessor';
 import { useAppContext } from '../context/AppContext';
+import { useNavigationContext } from '../context/NavigationContext';
 import AccessibleButton from '../components/AccessibleButton';
 import ObstacleOverlay from '../components/ObstacleOverlay';
 import { COLORS, FONT_SIZES, SPACING } from '../utils/constants';
@@ -25,11 +26,20 @@ export default function CameraScreen() {
 
   const { hasPermission, requestPermission, isRequesting } = useCamera();
   const { settings, currentMode } = useAppContext();
+  const {
+    route,
+    isGuiding,
+    currentStepIndex,
+    remainingDistanceMeters,
+    stopNavigation,
+  } = useNavigationContext();
   const [isActive, setIsActive] = useState(false);
   const [obstacles, setObstacles] = useState<ObstacleInfo[]>([]);
 
   // TFLite modeli ve labellerı al
   const { model, state: modelState, labels } = useMLModel();
+
+  const currentStep = route?.steps[currentStepIndex];
 
   // Modelden yeni çıktılar geldiğinde
   const handleObstaclesDetected = useCallback((newObstacles: ObstacleInfo[]) => {
@@ -121,6 +131,29 @@ export default function CameraScreen() {
         {/* Engel Overlay */}
         <ObstacleOverlay obstacles={obstacles} visible={isActive} />
 
+        {/* Navigasyon Adım Bandı (üst) */}
+        {isGuiding && currentStep && (
+          <TouchableOpacity
+            style={styles.navBanner}
+            onPress={() => speechService.speak(currentStep.instruction)}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={`Sıradaki adım: ${currentStep.instruction}`}
+            accessibilityHint="Talimatı tekrar dinlemek için dokunun"
+            activeOpacity={0.7}
+          >
+            <Text style={styles.navBannerIcon}>🧭</Text>
+            <View style={styles.navBannerContent}>
+              <Text style={styles.navBannerStep} numberOfLines={2}>
+                {currentStep.instruction}
+              </Text>
+              <Text style={styles.navBannerMeta}>
+                {route?.destination.shortName} • {(remainingDistanceMeters / 1000).toFixed(2)} km
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
         {/* Model Durumu (AI Yükleniyor vb) */}
         {modelState !== 'loaded' && (
           <View style={styles.loadingOverlay}>
@@ -151,6 +184,17 @@ export default function CameraScreen() {
               variant="danger"
             />
           )}
+
+          {isGuiding && (
+            <AccessibleButton
+              label="Navigasyonu Durdur"
+              onPress={stopNavigation}
+              icon="🧭"
+              variant="secondary"
+              fullWidth
+              accessibilityHint="Yol tarifini sonlandırır"
+            />
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -167,5 +211,30 @@ const styles = StyleSheet.create({
   loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.medium, fontWeight: '600' },
   controlPanel: { flex: 1, paddingTop: SPACING.xl, paddingHorizontal: SPACING.md },
-  buttonContainer: { gap: SPACING.md }
+  buttonContainer: { gap: SPACING.md },
+  navBanner: {
+    position: 'absolute',
+    top: SPACING.md,
+    left: SPACING.md,
+    right: SPACING.md,
+    backgroundColor: 'rgba(0, 85, 204, 0.92)',
+    borderRadius: 16,
+    padding: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  navBannerIcon: { fontSize: 32 },
+  navBannerContent: { flex: 1 },
+  navBannerStep: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZES.medium,
+    fontWeight: '700',
+  },
+  navBannerMeta: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZES.small - 2,
+    marginTop: 2,
+    opacity: 0.9,
+  },
 });

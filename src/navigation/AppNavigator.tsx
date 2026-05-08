@@ -1,27 +1,30 @@
 /**
  * VisionAssist - Uygulama Navigasyonu
- * 
- * Alt sekme (bottom tab) navigasyonu ile:
- * - Ana Ekran (home)
- * - Algılama (camera/detection)
- * - Ayarlar (settings)
+ *
+ * Yapı:
+ *   RootStack
+ *     ├── MainTabs (Bottom Tabs: Ana / Algılama / Ayarlar)
+ *     └── DestinationPicker (modal — navigasyon hedef seçimi)
+ *
+ * Bottom tab navigasyonu görme engelli kullanıcılar için
+ * büyük ve erişilebilir; modal ekran ise hedef seçimi için
+ * tüm ekranı kaplayan, geri yönlendirmeli bir akış sağlar.
  */
 
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Text, StyleSheet } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
 import CameraScreen from '../screens/CameraScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import DestinationPickerScreen from '../screens/DestinationPickerScreen';
 import { COLORS, FONT_SIZES, MIN_TOUCH_SIZE } from '../utils/constants';
 
 const Tab = createBottomTabNavigator();
+const RootStack = createNativeStackNavigator();
 
-/**
- * Alt sekme navigasyonu
- * Görme engelli kullanıcılar için büyük ve erişilebilir sekmeler.
- */
-export default function AppNavigator() {
+function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -67,6 +70,26 @@ export default function AppNavigator() {
         }}
       />
     </Tab.Navigator>
+  );
+}
+
+export default function AppNavigator() {
+  return (
+    <RootStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <RootStack.Screen name="MainTabs" component={MainTabs} />
+      <RootStack.Screen
+        name="DestinationPicker"
+        component={DestinationPickerScreen}
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }}
+      />
+    </RootStack.Navigator>
   );
 }
 

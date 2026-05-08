@@ -8,7 +8,69 @@ import { Direction, Distance, RiskLevel, ObstacleInfo } from './types';
 import {
   SPEECH_MESSAGES_TR,
   SPEECH_MESSAGES_EN,
+  OBJECT_LABELS_TR,
 } from './constants';
+
+/**
+ * COCO model etiketini insan-okunur ada çevirir.
+ * Bilinmeyen etiketler için "nesne" / "object" döner.
+ */
+export function localizeLabel(
+  label: string | undefined,
+  language: 'tr' | 'en' = 'tr'
+): string {
+  if (!label) return language === 'tr' ? 'nesne' : 'object';
+  const trimmed = label.toLowerCase().trim();
+  if (language === 'tr') {
+    return OBJECT_LABELS_TR[trimmed] ?? trimmed;
+  }
+  return trimmed;
+}
+
+/**
+ * Yön + nesne adı + mesafeye göre doğal cümle üretir.
+ *  Örn: "Önünüzde yakın mesafede sandalye var"
+ *       "Sağınızda kişi"
+ */
+function buildLabeledMessage(
+  obstacle: ObstacleInfo,
+  language: 'tr' | 'en'
+): string | null {
+  const name = localizeLabel(obstacle.label, language);
+  if (!obstacle.label) return null; // Etiketsiz uyarılar için klasik mesaj kullanılsın
+
+  if (language === 'tr') {
+    const dirText =
+      obstacle.direction === Direction.LEFT
+        ? 'Solunuzda'
+        : obstacle.direction === Direction.RIGHT
+        ? 'Sağınızda'
+        : 'Önünüzde';
+
+    if (obstacle.distance === Distance.NEAR) {
+      return `${dirText} yakın mesafede ${name}, dikkat`;
+    }
+    if (obstacle.distance === Distance.MEDIUM) {
+      return `${dirText} ${name}`;
+    }
+    return `Uzakta ${name} algılandı`;
+  }
+
+  const dirTextEn =
+    obstacle.direction === Direction.LEFT
+      ? 'On your left'
+      : obstacle.direction === Direction.RIGHT
+      ? 'On your right'
+      : 'Ahead';
+
+  if (obstacle.distance === Distance.NEAR) {
+    return `${dirTextEn}, close ${name}, attention`;
+  }
+  if (obstacle.distance === Distance.MEDIUM) {
+    return `${dirTextEn}, ${name}`;
+  }
+  return `${name} detected far away`;
+}
 
 /**
  * Benzersiz kimlik üretici
@@ -30,6 +92,10 @@ export function getObstacleMessage(
   obstacle: ObstacleInfo,
   language: 'tr' | 'en' = 'tr'
 ): string {
+  // ML modelinden etiket geldiyse nesne adını içeren cümle dön
+  const labeled = buildLabeledMessage(obstacle, language);
+  if (labeled) return labeled;
+
   const messages = language === 'tr' ? SPEECH_MESSAGES_TR : SPEECH_MESSAGES_EN;
   const { direction, distance } = obstacle;
 
