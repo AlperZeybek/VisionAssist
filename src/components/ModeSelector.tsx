@@ -37,7 +37,7 @@ const MODES = [
     mode: DetectionMode.NAVIGATION,
     label: 'Navigasyon',
     icon: '🧭',
-    description: 'Yol tarifi modu (yakında)',
+    description: 'Yol tarifi ve yön rehberliği modu',
   },
 ];
 
@@ -59,7 +59,6 @@ export default function ModeSelector({
     >
       {MODES.map(({ mode, label, icon, description }) => {
         const isActive = currentMode === mode;
-        const isDisabled = mode === DetectionMode.NAVIGATION;
 
         return (
           <TouchableOpacity
@@ -67,17 +66,14 @@ export default function ModeSelector({
             style={[
               styles.modeButton,
               isActive && styles.modeButtonActive,
-              isDisabled && styles.modeButtonDisabled,
             ]}
             onPress={() => handleModePress(mode)}
-            disabled={isDisabled}
             accessible={true}
             accessibilityRole="tab"
             accessibilityLabel={`${label} modu`}
             accessibilityHint={description}
             accessibilityState={{
               selected: isActive,
-              disabled: isDisabled,
             }}
           >
             <Text style={styles.modeIcon}>{icon}</Text>
@@ -85,7 +81,6 @@ export default function ModeSelector({
               style={[
                 styles.modeLabel,
                 isActive && styles.modeLabelActive,
-                isDisabled && styles.modeLabelDisabled,
               ]}
             >
               {label}
@@ -119,9 +114,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryDark,
     borderColor: COLORS.primary,
   },
-  modeButtonDisabled: {
-    opacity: 0.4,
-  },
   modeIcon: {
     fontSize: 28,
     marginBottom: 4,
@@ -135,8 +127,5 @@ const styles = StyleSheet.create({
   modeLabelActive: {
     color: COLORS.textPrimary,
     fontWeight: '700',
-  },
-  modeLabelDisabled: {
-    color: COLORS.textDisabled,
   },
 });
