@@ -36,7 +36,7 @@ import { speechService } from '../services/accessibility/SpeechService';
 import { COLORS, FONT_SIZES, SPACING, MIN_TOUCH_SIZE } from '../utils/constants';
 
 type RootStackParamList = {
-  MainTabs: { focusCamera?: boolean } | undefined;
+  MainTabs: { screen?: string } | undefined;
   DestinationPicker: undefined;
 };
 
@@ -81,7 +81,7 @@ export default function DestinationPickerScreen() {
       setIsStartingNav(true);
       const ok = await startNavigationToFavorite(favorite);
       setIsStartingNav(false);
-      if (ok) navigation.navigate('MainTabs', { focusCamera: true });
+      if (ok) navigation.navigate('MainTabs', { screen: 'Algılama' });
     },
     [hasLocationPermission, currentLocation, startNavigationToFavorite, navigation]
   );
@@ -116,7 +116,7 @@ export default function DestinationPickerScreen() {
       setIsStartingNav(true);
       const ok = await startNavigationToPlace(place);
       setIsStartingNav(false);
-      if (ok) navigation.navigate('MainTabs', { focusCamera: true });
+      if (ok) navigation.navigate('MainTabs', { screen: 'Algılama' });
     },
     [hasLocationPermission, currentLocation, startNavigationToPlace, navigation]
   );
