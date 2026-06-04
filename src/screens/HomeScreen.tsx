@@ -1,6 +1,6 @@
 /**
  * VisionAssist - Ana Ekran
- * Görme engelli kullanıcılar için tasarlanmış ana kontrol paneli.
+ * Referans görsel ile birebir eşleştirilmiş açık mavi-gri tema.
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -66,7 +66,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -74,25 +74,18 @@ export default function HomeScreen() {
       >
         {/* ── Marka Başlığı ──────────────────────────────────────── */}
         <View style={styles.header} accessible accessibilityRole="header">
-          <View style={styles.brandRow}>
-            <View style={styles.logoBox}>
-              <Text style={styles.logoIcon}>♿</Text>
-            </View>
-            <View style={styles.brandTexts}>
-              <Text style={styles.brandName}>VisionAssist</Text>
-              <Text style={styles.brandSub}>Görme Engelliler İçin Mobil Rehber</Text>
-            </View>
+          <View style={styles.logoBox}>
+            <Text style={styles.logoWave}>♿</Text>
+          </View>
+          <View style={styles.brandTexts}>
+            <Text style={styles.brandName}>VisionAssist</Text>
+            <Text style={styles.brandSub}>Görme Engelliler İçin Mobil Rehber</Text>
           </View>
         </View>
 
         {/* ── Aktif Navigasyon Kartı ─────────────────────────────── */}
         {isGuiding && route && (
-          <View
-            style={styles.activeNavCard}
-            accessible
-            accessibilityRole="summary"
-            accessibilityLabel={`Aktif navigasyon: ${route.destination.shortName}, kalan ${Math.round(remainingDistanceMeters)} metre`}
-          >
+          <View style={styles.activeNavCard} accessible accessibilityRole="summary">
             <Text style={styles.activeNavTitle} numberOfLines={1}>
               🧭 {route.destination.shortName}
             </Text>
@@ -105,7 +98,6 @@ export default function HomeScreen() {
               icon="🛑"
               variant="danger"
               fullWidth
-              accessibilityHint="Aktif yol tarifini sonlandırır"
             />
           </View>
         )}
@@ -117,19 +109,19 @@ export default function HomeScreen() {
             onPress={handleStartDetection}
             accessible
             accessibilityRole="button"
-            accessibilityLabel={
-              currentMode === DetectionMode.NAVIGATION && !route
-                ? 'Hedef Seç ve Başla'
-                : 'Algılamayı Başlat'
-            }
-            accessibilityHint="Kamerayı açarak engel algılamaya başlar"
+            accessibilityLabel="Algılamayı Başlat"
             activeOpacity={0.85}
           >
-            {/* İç daireler (dalga efekti) */}
             <View style={styles.circleRing2} />
             <View style={styles.circleRing1} />
             <View style={styles.circleInner}>
-              <Text style={styles.circleIcon}>📡</Text>
+              {/* Yayın (wifi) ikonu — 3 yay + merkez nokta */}
+              <View style={styles.waveIcon}>
+                <View style={[styles.waveArc, styles.waveArc3]} />
+                <View style={[styles.waveArc, styles.waveArc2]} />
+                <View style={[styles.waveArc, styles.waveArc1]} />
+                <View style={styles.waveDot} />
+              </View>
             </View>
           </TouchableOpacity>
           <Text style={styles.circleLabel}>
@@ -147,32 +139,31 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* ── Mevcut Mod Göstergesi ─────────────────────────────── */}
+        {/* ── Mevcut Mod + Sesli Yönlendirme Kartı ─────────────── */}
         <View style={styles.statusCard}>
+          {/* Mevcut Mod satırı */}
           <View style={styles.statusRow}>
-            <View style={styles.statusDotWrapper}>
-              <View style={styles.statusDot} />
-            </View>
-            <View style={styles.statusTexts}>
-              <Text style={styles.statusLabel}>Mevcut Mod</Text>
+            <Text style={styles.statusLabel}>Mevcut Mod</Text>
+            <View style={styles.statusRight}>
               <Text style={styles.statusValue}>{modeLabel} Aktif</Text>
+              <View style={styles.statusDot} />
             </View>
           </View>
 
-          {/* ── Sesli Yönlendirme Toggle ──────────────────────────── */}
-          <View style={[styles.statusRow, styles.toggleRow]}>
-            <Text style={styles.toggleIcon}>🔊</Text>
-            <View style={styles.statusTexts}>
-              <Text style={styles.statusValue}>Sesli Yönlendirme</Text>
-              <Text style={styles.statusLabel}>
-                {settings.hapticEnabled ? 'Aktif' : 'Pasif'}
-              </Text>
+          <View style={styles.divider} />
+
+          {/* Sesli Yönlendirme Toggle */}
+          <View style={styles.statusRow}>
+            <Text style={styles.speakerIcon}>🔊</Text>
+            <View style={styles.toggleTexts}>
+              <Text style={styles.toggleLabel}>Sesli Yönlendirme</Text>
+              <Text style={styles.toggleSub}>Aktif</Text>
             </View>
             <Switch
               value={settings.hapticEnabled}
               onValueChange={(val) => updateSettings({ hapticEnabled: val })}
               trackColor={{ false: COLORS.border, true: COLORS.primary }}
-              thumbColor={COLORS.textPrimary}
+              thumbColor={COLORS.surface}
               accessible
               accessibilityLabel="Sesli yönlendirme"
               accessibilityRole="switch"
@@ -180,12 +171,11 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* ── Alt Ayarlar Butonu ────────────────────────────────── */}
+        {/* ── Ayarlar ───────────────────────────────────────────── */}
         <View style={styles.bottomAction}>
           <AccessibleButton
             label="Ayarlar"
             onPress={() => navigation.navigate('MainTabs', { screen: 'Ayarlar' })}
-            accessibilityHint="Uygulama ayarlarını açar"
             icon="⚙️"
             variant="secondary"
             fullWidth
@@ -205,11 +195,11 @@ const styles = StyleSheet.create({
   },
 
   // Marka başlığı
-  header: { marginBottom: SPACING.xl },
-  brandRow: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
+    marginBottom: SPACING.xl,
   },
   logoBox: {
     width: 56,
@@ -219,7 +209,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoIcon: { fontSize: 28 },
+  logoWave: { fontSize: 28 },
   brandTexts: { flex: 1 },
   brandName: {
     fontSize: FONT_SIZES.xlarge,
@@ -227,12 +217,12 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   brandSub: {
-    fontSize: FONT_SIZES.small - 2,
+    fontSize: FONT_SIZES.small - 4,
     color: COLORS.textSecondary,
     marginTop: 2,
   },
 
-  // Aktif navigasyon kartı
+  // Aktif nav kartı
   activeNavCard: {
     backgroundColor: COLORS.primaryDark,
     borderRadius: 16,
@@ -241,21 +231,18 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   activeNavTitle: {
-    color: COLORS.textPrimary,
+    color: '#FFFFFF',
     fontSize: FONT_SIZES.large,
     fontWeight: '800',
   },
   activeNavDetail: {
-    color: COLORS.textPrimary,
+    color: 'rgba(255,255,255,0.85)',
     fontSize: FONT_SIZES.medium,
     fontWeight: '600',
   },
 
-  // Dairesel ana buton
-  mainButtonWrapper: {
-    alignItems: 'center',
-    marginBottom: SPACING.xl,
-  },
+  // Dairesel buton
+  mainButtonWrapper: { alignItems: 'center', marginBottom: SPACING.xl },
   circleButton: {
     width: 160,
     height: 160,
@@ -269,14 +256,14 @@ const styles = StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: 80,
-    backgroundColor: 'rgba(0, 122, 255, 0.15)',
+    backgroundColor: 'rgba(26, 95, 186, 0.12)',
   },
   circleRing1: {
     position: 'absolute',
     width: 130,
     height: 130,
     borderRadius: 65,
-    backgroundColor: 'rgba(0, 122, 255, 0.25)',
+    backgroundColor: 'rgba(26, 95, 186, 0.22)',
   },
   circleInner: {
     width: 100,
@@ -288,22 +275,44 @@ const styles = StyleSheet.create({
     elevation: 6,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.4,
     shadowRadius: 8,
   },
-  circleIcon: { fontSize: 40 },
+
+  // Wifi/yayın ikonu
+  waveIcon: { alignItems: 'center', justifyContent: 'flex-end', height: 56 },
+  waveArc: {
+    position: 'absolute',
+    borderRadius: 100,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    borderBottomWidth: 0,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+  },
+  waveArc3: { width: 56, height: 28, bottom: 12 },
+  waveArc2: { width: 38, height: 19, bottom: 14 },
+  waveArc1: { width: 22, height: 11, bottom: 16 },
+  waveDot: {
+    position: 'absolute',
+    bottom: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+  },
+
   circleLabel: {
     color: COLORS.textPrimary,
-    fontSize: FONT_SIZES.small,
+    fontSize: FONT_SIZES.small - 2,
     fontWeight: '800',
-    letterSpacing: 1.2,
+    letterSpacing: 1.0,
     textAlign: 'center',
   },
 
-  // Mod seçici
   section: { marginBottom: SPACING.lg },
 
-  // Durum kartı (mevcut mod + sesli yönlendirme)
+  // Durum kartı
   statusCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 16,
@@ -319,17 +328,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     gap: SPACING.sm,
   },
-  toggleRow: {
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+  statusLabel: {
+    fontSize: FONT_SIZES.small,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+    flex: 1,
   },
-  statusDotWrapper: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(52, 199, 89, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  statusRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  statusValue: {
+    fontSize: FONT_SIZES.small,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
   statusDot: {
     width: 10,
@@ -337,17 +346,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: COLORS.secondary,
   },
-  toggleIcon: { fontSize: 24 },
-  statusTexts: { flex: 1 },
-  statusLabel: {
-    fontSize: FONT_SIZES.small - 2,
-    color: COLORS.textSecondary,
-  },
-  statusValue: {
-    fontSize: FONT_SIZES.small,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
+  divider: { height: 1, backgroundColor: COLORS.border, marginHorizontal: SPACING.md },
+  speakerIcon: { fontSize: 22 },
+  toggleTexts: { flex: 1 },
+  toggleLabel: { fontSize: FONT_SIZES.small, fontWeight: '700', color: COLORS.textPrimary },
+  toggleSub: { fontSize: FONT_SIZES.small - 4, color: COLORS.textSecondary },
 
   bottomAction: { marginTop: SPACING.sm },
 });

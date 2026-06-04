@@ -101,6 +101,11 @@ const styles = StyleSheet.create({
     height: 80,
     paddingBottom: 8,
     paddingTop: 8,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
   },
   tabLabel: {
     fontSize: FONT_SIZES.small - 2,

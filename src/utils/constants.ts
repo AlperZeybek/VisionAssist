@@ -296,11 +296,11 @@ export const SPEECH_MESSAGES_EN = {
 // UI SABİTLERİ
 // ==========================================
 
-/** Renk paleti */
+/** Renk paleti — referans görseldeki açık mavi-gri tema */
 export const COLORS = {
   // Ana renkler
-  primary: '#007AFF',
-  primaryDark: '#0055CC',
+  primary: '#1A5FBA',
+  primaryDark: '#164FA0',
   secondary: '#34C759',
   accent: '#FF9500',
 
@@ -310,20 +310,20 @@ export const COLORS = {
   riskLow: '#34C759',
   riskNone: '#8E8E93',
 
-  // Arka plan renkleri
-  background: '#000000',
-  surface: '#1C1C1E',
-  surfaceLight: '#2C2C2E',
+  // Arka plan renkleri — açık mavi-gri (referans ile birebir)
+  background: '#EDF2FA',
+  surface: '#FFFFFF',
+  surfaceLight: '#F0F5FC',
 
   // Metin renkleri
-  textPrimary: '#FFFFFF',
-  textSecondary: '#AEAEB2',
-  textDisabled: '#636366',
+  textPrimary: '#1A2340',
+  textSecondary: '#5A6A8A',
+  textDisabled: '#9BA5BF',
 
   // Özel renkler
-  overlay: 'rgba(0, 0, 0, 0.6)',
-  overlayLight: 'rgba(255, 255, 255, 0.1)',
-  border: '#38383A',
+  overlay: 'rgba(0, 0, 0, 0.5)',
+  overlayLight: 'rgba(255, 255, 255, 0.85)',
+  border: '#D8E0EE',
 };
 
 /** Font boyutları - erişilebilirlik için büyük */
