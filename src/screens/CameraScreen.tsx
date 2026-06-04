@@ -137,7 +137,7 @@ export default function CameraScreen() {
           device={device}
           isActive={true}
           frameProcessor={frameProcessor}
-          pixelFormat="yuv"
+          pixelFormat="rgb"
         />
 
         <ObstacleOverlay obstacles={obstacles} visible={isActive} />

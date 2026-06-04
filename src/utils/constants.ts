@@ -38,26 +38,27 @@ export const ALLOWED_LABELS = new Set<string>([
  * Yüksek eşik = daha az yanlış pozitif.
  */
 export const PER_CLASS_MIN_CONFIDENCE: Record<string, number> = {
-  // Çok kritik — düşük eşik kabul (kaçırma riski yüksek)
-  person:       0.60,
-  car:          0.60,
-  motorcycle:   0.60,
-  bus:          0.60,
-  truck:        0.60,
-  bicycle:      0.62,
-  // İç mekan nesneleri — yüksek eşik (zemin deseni vs. karışıklık)
-  chair:        0.65,
-  couch:        0.65,
-  'dining table': 0.65,
-  bed:          0.65,
-  toilet:       0.65,
+  // Çok kritik — düşük eşik (kaçırma riski yüksek)
+  person:          0.60,
+  car:             0.60,
+  motorcycle:      0.60,
+  bus:             0.60,
+  truck:           0.60,
+  bicycle:         0.62,
+  // İç mekan nesneleri — yüksek eşik
+  chair:           0.68,
+  couch:           0.72,   // Sandalyeyle sık karışır
+  'dining table':  0.68,
+  bed:             0.72,
+  // Kolayca yanlış tespit edilen sınıflar — çok yüksek eşik
+  toilet:          0.88,   // Sandalye/koltukla karışır, hayati önem taşır
+  sink:            0.80,   // Başka yüzeylerle karışabilir
+  refrigerator:    0.75,
   // Diğerleri
-  dog:          0.65,
+  dog:             0.65,
   'traffic light': 0.60,
-  bench:        0.65,
-  'potted plant': 0.68,
-  sink:         0.68,
-  refrigerator: 0.65,
+  bench:           0.68,
+  'potted plant':  0.70,
 };
 
 /** Filtreli sınıflarda genel minimum eşik */
