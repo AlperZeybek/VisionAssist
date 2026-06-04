@@ -38,34 +38,41 @@ export const ALLOWED_LABELS = new Set<string>([
  * Yüksek eşik = daha az yanlış pozitif.
  */
 export const PER_CLASS_MIN_CONFIDENCE: Record<string, number> = {
-  // Çok kritik — düşük eşik (kaçırma riski yüksek)
-  person:          0.60,
-  car:             0.60,
-  motorcycle:      0.60,
-  bus:             0.60,
-  truck:           0.60,
-  bicycle:         0.62,
-  // İç mekan nesneleri — yüksek eşik
-  chair:           0.68,
-  couch:           0.72,   // Sandalyeyle sık karışır
-  'dining table':  0.68,
-  bed:             0.72,
-  // Kolayca yanlış tespit edilen sınıflar — çok yüksek eşik
-  toilet:          0.88,   // Sandalye/koltukla karışır, hayati önem taşır
-  sink:            0.80,   // Başka yüzeylerle karışabilir
-  refrigerator:    0.75,
-  // Diğerleri
-  dog:             0.65,
-  'traffic light': 0.60,
-  bench:           0.68,
-  'potted plant':  0.70,
+  // ── Dışarıda kritik (araçlar, yayalar) ───────────────────────────────────
+  person:          0.50,
+  car:             0.50,
+  motorcycle:      0.50,
+  bus:             0.50,
+  truck:           0.50,
+  bicycle:         0.52,
+
+  // ── İÇ MEKAN KRİTİK engeller — düşük eşik, kaçırma çok tehlikeli ────────
+  chair:           0.45,   // Sandalye — en sık iç mekan engeli
+  couch:           0.48,   // Koltuk
+  'dining table':  0.45,   // Masa
+  bed:             0.48,   // Yatak
+  'potted plant':  0.50,   // Saksı bitkisi
+
+  // ── Sık yanlış pozitif veren sınıflar — makul yüksek eşik ────────────────
+  toilet:          0.78,   // Sandalyeyle karışabilir ama %78 güven gerçektir
+  sink:            0.65,
+  refrigerator:    0.60,
+  microwave:       0.60,
+
+  // ── Diğerleri ─────────────────────────────────────────────────────────────
+  dog:             0.55,
+  'traffic light': 0.50,
+  bench:           0.52,
+  backpack:        0.55,
+  umbrella:        0.55,
+  suitcase:        0.55,
 };
 
 /** Filtreli sınıflarda genel minimum eşik */
-export const DEFAULT_MIN_CONFIDENCE = 0.65;
+export const DEFAULT_MIN_CONFIDENCE = 0.50;
 
 /** Temporal smoothing — kaç ardışık karede görünmeli (duyurmadan önce) */
-export const TEMPORAL_SMOOTHING_FRAMES = 2;
+export const TEMPORAL_SMOOTHING_FRAMES = 1;  // 1 = smoothing yok, ilk karede duyur
 
 /**
  * Sokak modunda yüksek öncelikli sınıflar.

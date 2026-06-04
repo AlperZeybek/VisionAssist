@@ -57,8 +57,9 @@ export default function CameraScreen() {
     if (!isActive) return;
     setObstacles(newObstacles);
 
+    // En yakın/kritik engeli seç — proximityScore 0.25+ yeterli (orta mesafe dahil)
     const critical = newObstacles
-      .filter(o => (o.proximityScore ?? 0) > 0.5)
+      .filter(o => (o.proximityScore ?? 0) > 0.25)
       .sort((a, b) => (b.proximityScore ?? 0) - (a.proximityScore ?? 0))[0];
 
     if (critical) {
