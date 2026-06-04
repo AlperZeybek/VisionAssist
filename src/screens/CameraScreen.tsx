@@ -137,8 +137,6 @@ export default function CameraScreen() {
           device={device}
           isActive={true}
           frameProcessor={frameProcessor}
-          video={true}
-          audio={false}
           pixelFormat="yuv"
         />
 
