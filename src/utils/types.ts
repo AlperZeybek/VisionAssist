@@ -70,8 +70,18 @@ export interface ObstacleInfo {
   brightness: number;
   /** Yakınlık skoru (0-1 arası) */
   proximityScore?: number;
-  /** Yapay zekanın bulduğu sınıf adı */
+  /** Yapay zekanın bulduğu sınıf adı (İngilizce COCO etiketi) */
   label?: string;
+  /**
+   * Normalize edilmiş bounding box koordinatları (0-1 arası).
+   * ObstacleOverlay'de ekrana eşlemek için kullanılır.
+   */
+  bbox?: {
+    xmin: number;
+    ymin: number;
+    xmax: number;
+    ymax: number;
+  };
 }
 
 /** Bölge analiz sonucu */

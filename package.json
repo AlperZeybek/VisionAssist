@@ -6,7 +6,35 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "jest --passWithNoTests"
+  },
+  "jest": {
+    "testMatch": [
+      "**/__tests__/**/*.test.ts"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx|js|jsx)$": "babel-jest"
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json"
+    ],
+    "testEnvironment": "node",
+    "transformIgnorePatterns": [
+      "node_modules/(?!(expo-haptics|expo-speech|expo-location|@react-native-async-storage)/)"
+    ],
+    "moduleNameMapper": {
+      "^react-native-vision-camera$": "<rootDir>/__mocks__/react-native-vision-camera.js",
+      "^react-native-worklets-core$": "<rootDir>/__mocks__/react-native-worklets-core.js",
+      "^vision-camera-resize-plugin$": "<rootDir>/__mocks__/vision-camera-resize-plugin.js",
+      "^react-native-fast-tflite$": "<rootDir>/__mocks__/react-native-fast-tflite.js",
+      "^expo-haptics$": "<rootDir>/__mocks__/expo-haptics.js",
+      "^expo-speech$": "<rootDir>/__mocks__/expo-speech.js"
+    }
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -40,7 +68,12 @@
     "@babel/plugin-transform-shorthand-properties": "^7.27.1",
     "@babel/plugin-transform-template-literals": "^7.27.1",
     "@babel/preset-typescript": "^7.28.5",
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.1.10",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-expo": "^56.0.4",
+    "jest-mock": "^29.7.0",
     "typescript": "~5.9.2"
   },
   "private": true

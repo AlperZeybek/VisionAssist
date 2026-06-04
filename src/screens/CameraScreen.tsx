@@ -1,10 +1,11 @@
 /**
- * VisionAssist - Kamera / Algılama Ekranı (v3 - Yapay Zeka Entegrasyonlu)
+ * VisionAssist - Kamera / Algılama Ekranı
  */
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, StatusBar, Dimensions, TouchableOpacity
+  View, Text, StyleSheet, StatusBar, Dimensions, TouchableOpacity
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera, useCameraDevice } from 'react-native-vision-camera';
 
 import { useCamera } from '../hooks/useCamera';
@@ -21,6 +22,17 @@ import { ObstacleInfo } from '../utils/types';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+/** OSRM manevra türünü basit bir ok karakterine dönüştürür */
+function maneuverArrow(instruction: string): string {
+  const lower = instruction.toLowerCase();
+  if (lower.includes('sola')) return '←';
+  if (lower.includes('sağa')) return '→';
+  if (lower.includes('düz') || lower.includes('devam')) return '↑';
+  if (lower.includes('döner kavşak')) return '↻';
+  if (lower.includes('ulaştınız') || lower.includes('varış')) return '✓';
+  return '↑';
+}
+
 export default function CameraScreen() {
   const device = useCameraDevice('back');
 
@@ -33,32 +45,33 @@ export default function CameraScreen() {
     remainingDistanceMeters,
     stopNavigation,
   } = useNavigationContext();
+
   const [isActive, setIsActive] = useState(false);
   const [obstacles, setObstacles] = useState<ObstacleInfo[]>([]);
 
-  // TFLite modeli ve labellerı al
   const { model, state: modelState, labels } = useMLModel();
 
   const currentStep = route?.steps[currentStepIndex];
 
-  // Modelden yeni çıktılar geldiğinde
   const handleObstaclesDetected = useCallback((newObstacles: ObstacleInfo[]) => {
     if (!isActive) return;
     setObstacles(newObstacles);
 
-    // En kritik engeli (yakınlık > 0.5) seç
-    const critical = newObstacles.filter(o => (o.proximityScore ?? 0) > 0.5).sort((a,b) => (b.proximityScore ?? 0) - (a.proximityScore ?? 0))[0];
+    const critical = newObstacles
+      .filter(o => (o.proximityScore ?? 0) > 0.5)
+      .sort((a, b) => (b.proximityScore ?? 0) - (a.proximityScore ?? 0))[0];
+
     if (critical) {
       const msg = getObstacleMessage(critical, settings.language);
       speechService.speak(msg, critical.riskLevel);
     }
   }, [isActive, settings.language]);
 
-  // JS bağımsız çalışan Native Frame Processor (Worklet)
   const frameProcessor = useVisionAssistFrameProcessor(
-    isActive ? model : null, 
-    labels, 
-    handleObstaclesDetected
+    isActive ? model : null,
+    labels,
+    handleObstaclesDetected,
+    currentMode
   );
 
   const toggleDetection = useCallback(() => {
@@ -78,7 +91,7 @@ export default function CameraScreen() {
     setObstacles([]);
   }, []);
 
-  // İZİN EKRANI
+  // ── İzin Ekranı ────────────────────────────────────────────────
   if (!hasPermission) {
     return (
       <SafeAreaView style={styles.container}>
@@ -112,11 +125,12 @@ export default function CameraScreen() {
     );
   }
 
+  // ── Ana Ekran ──────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
 
-      {/* Kamera Ön İzleme */}
+      {/* Kamera Görüntüsü */}
       <View style={styles.cameraContainer}>
         <Camera
           style={StyleSheet.absoluteFill}
@@ -128,33 +142,45 @@ export default function CameraScreen() {
           pixelFormat="yuv"
         />
 
-        {/* Engel Overlay */}
         <ObstacleOverlay obstacles={obstacles} visible={isActive} />
 
-        {/* Navigasyon Adım Bandı (üst) */}
+        {/* Navigasyon Banner (üst) */}
         {isGuiding && currentStep && (
           <TouchableOpacity
             style={styles.navBanner}
             onPress={() => speechService.speak(currentStep.instruction)}
-            accessible={true}
+            accessible
             accessibilityRole="button"
             accessibilityLabel={`Sıradaki adım: ${currentStep.instruction}`}
             accessibilityHint="Talimatı tekrar dinlemek için dokunun"
             activeOpacity={0.7}
           >
-            <Text style={styles.navBannerIcon}>🧭</Text>
+            {/* Yön oku */}
+            <View style={styles.navArrowBox}>
+              <Text style={styles.navArrow}>
+                {maneuverArrow(currentStep.instruction)}
+              </Text>
+            </View>
+
+            {/* Talimat ve mesafe */}
             <View style={styles.navBannerContent}>
               <Text style={styles.navBannerStep} numberOfLines={2}>
                 {currentStep.instruction}
               </Text>
               <Text style={styles.navBannerMeta}>
-                {route?.destination.shortName} • {(remainingDistanceMeters / 1000).toFixed(2)} km
+                Kalan: {(remainingDistanceMeters / 1000).toFixed(1)} km
+                {route && ` • ${route.destination.shortName}`}
               </Text>
+            </View>
+
+            {/* Mikrofon butonu (sağ üst) */}
+            <View style={styles.navMicButton}>
+              <Text style={styles.navMicIcon}>🎙️</Text>
             </View>
           </TouchableOpacity>
         )}
 
-        {/* Model Durumu (AI Yükleniyor vb) */}
+        {/* Model Yükleniyor */}
         {modelState !== 'loaded' && (
           <View style={styles.loadingOverlay}>
             <Text style={styles.loadingText}>Yapay Zeka Modeli Yükleniyor...</Text>
@@ -162,40 +188,67 @@ export default function CameraScreen() {
         )}
       </View>
 
-      {/* Kontrol Paneli */}
+      {/* ── Alt Kontrol Paneli ─────────────────────────────────── */}
       <View style={styles.controlPanel}>
-        <View style={styles.buttonContainer}>
-          <AccessibleButton
-            label={isActive ? 'Algılamayı Durdur' : 'Algılamayı Başlat'}
+        {/* 3 yuvarlak ikon butonu (görsel tasarımına uygun) */}
+        <View style={styles.iconButtonRow}>
+          {/* Hoparlör */}
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => {
+              if (isActive && obstacles.length > 0) {
+                const top = obstacles[0];
+                speechService.speak(getObstacleMessage(top, settings.language), top.riskLevel);
+              }
+            }}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel="Son uyarıyı tekrarla"
+          >
+            <Text style={styles.iconButtonText}>🔊</Text>
+          </TouchableOpacity>
+
+          {/* Ana Algılama Butonu (orta, büyük) */}
+          <TouchableOpacity
+            style={[
+              styles.iconButtonLarge,
+              isActive && styles.iconButtonLargeActive,
+            ]}
             onPress={toggleDetection}
-            accessibilityHint={isActive ? 'Durdurur' : 'Başlatır'}
-            icon={isActive ? '⏹️' : '▶️'}
-            variant={isActive ? 'danger' : 'success'}
-            fullWidth
-            large
             disabled={modelState !== 'loaded'}
-          />
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={isActive ? 'Algılamayı Durdur' : 'Algılamayı Başlat'}
+          >
+            <Text style={styles.iconButtonLargeText}>
+              {isActive ? '⏹' : '🎙'}
+            </Text>
+          </TouchableOpacity>
 
-          {isActive && (
-            <AccessibleButton
-              label="Acil Durdur"
-              onPress={emergencyStop}
-              icon="🛑"
-              variant="danger"
-            />
-          )}
-
-          {isGuiding && (
-            <AccessibleButton
-              label="Navigasyonu Durdur"
-              onPress={stopNavigation}
-              icon="🧭"
-              variant="secondary"
-              fullWidth
-              accessibilityHint="Yol tarifini sonlandırır"
-            />
-          )}
+          {/* Fener */}
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={emergencyStop}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel="Acil durdur"
+          >
+            <Text style={styles.iconButtonText}>🔦</Text>
+          </TouchableOpacity>
         </View>
+
+        {/* Navigasyonu Durdur (varsa) */}
+        {isGuiding && (
+          <TouchableOpacity
+            style={styles.stopNavButton}
+            onPress={stopNavigation}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel="Navigasyonu durdur"
+          >
+            <Text style={styles.stopNavText}>Navigasyonu Durdur</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -203,38 +256,153 @@ export default function CameraScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  permissionContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.xl },
+
+  // İzin ekranı
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
   permissionIcon: { fontSize: 80, marginBottom: SPACING.lg },
-  permissionTitle: { fontSize: FONT_SIZES.xlarge, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center', marginBottom: SPACING.md },
-  permissionDescription: { fontSize: FONT_SIZES.medium, color: COLORS.textSecondary, textAlign: 'center', marginBottom: SPACING.xl, lineHeight: 28 },
-  cameraContainer: { flex: 1, maxHeight: SCREEN_HEIGHT * 0.60, overflow: 'hidden', borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.medium, fontWeight: '600' },
-  controlPanel: { flex: 1, paddingTop: SPACING.xl, paddingHorizontal: SPACING.md },
-  buttonContainer: { gap: SPACING.md },
+  permissionTitle: {
+    fontSize: FONT_SIZES.xlarge,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    marginBottom: SPACING.md,
+  },
+  permissionDescription: {
+    fontSize: FONT_SIZES.medium,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: SPACING.xl,
+    lineHeight: 28,
+  },
+
+  // Kamera
+  cameraContainer: {
+    flex: 1,
+    maxHeight: SCREEN_HEIGHT * 0.65,
+    overflow: 'hidden',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZES.medium,
+    fontWeight: '600',
+  },
+
+  // Navigasyon banner
   navBanner: {
     position: 'absolute',
     top: SPACING.md,
     left: SPACING.md,
     right: SPACING.md,
-    backgroundColor: 'rgba(0, 85, 204, 0.92)',
+    backgroundColor: 'rgba(10, 22, 40, 0.93)',
     borderRadius: 16,
     padding: SPACING.md,
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 122, 255, 0.4)',
   },
-  navBannerIcon: { fontSize: 32 },
+  navArrowBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  navArrow: {
+    color: COLORS.textPrimary,
+    fontSize: 22,
+    fontWeight: '800',
+  },
   navBannerContent: { flex: 1 },
   navBannerStep: {
     color: COLORS.textPrimary,
-    fontSize: FONT_SIZES.medium,
+    fontSize: FONT_SIZES.small,
     fontWeight: '700',
+    lineHeight: 20,
   },
   navBannerMeta: {
-    color: COLORS.textPrimary,
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZES.small - 4,
+    marginTop: 3,
+  },
+  navMicButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  navMicIcon: { fontSize: 18 },
+
+  // Alt kontrol paneli
+  controlPanel: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md,
+    gap: SPACING.md,
+  },
+  iconButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xl,
+  },
+  iconButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconButtonText: { fontSize: 26 },
+  iconButtonLarge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+  },
+  iconButtonLargeActive: {
+    backgroundColor: COLORS.riskHigh,
+    shadowColor: COLORS.riskHigh,
+  },
+  iconButtonLargeText: { fontSize: 34 },
+  stopNavButton: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: 12,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  stopNavText: {
+    color: COLORS.textSecondary,
     fontSize: FONT_SIZES.small - 2,
-    marginTop: 2,
-    opacity: 0.9,
+    fontWeight: '600',
   },
 });

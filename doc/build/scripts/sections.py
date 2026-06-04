@@ -535,6 +535,7 @@ def write_bolum_4(doc, helpers):
 def write_bolum_5(doc, helpers):
     chapter = helpers["chapter"]
     section = helpers["section"]
+    subsection = helpers["subsection"]
     para = helpers["para"]
     blank = helpers["blank"]
     figure = helpers["figure"]
@@ -622,6 +623,99 @@ def write_bolum_5(doc, helpers):
         "VisionAssist; bireysel bir kullanıcı uygulaması olarak çalıştırılabilmesinin yanı sıra, görme engelli bireylerin eğitim aldığı kurumlar, rehabilitasyon merkezleri ve sosyal sorumluluk projeleri kapsamında yaygınlaştırılabilir. Üniversitelerde gerçekleştirilebilecek küçük ölçekli pilot uygulamalar; hem öğrencilerin erişilebilir yazılım geliştirme deneyimi kazanmasına hem de gerçek kullanıcılar üzerinde sistemin geri bildirimi ile sürekli iyileştirilmesine olanak tanıyabilir.")
     para(doc,
         "Yapılan çalışma; kullanıcı odaklı mühendislik anlayışının bir somut göstergesi olarak değerlendirilebilir. Geliştirilen sistemin temel mimarisi; yalnızca görme engelli bireyler için değil, dikkat dağınıklığı yaşayan veya geçici görme bozukluğu bulunan kullanıcılar için de uyarlanabilir nitelikte modüler bir altyapı sağlamaktadır. Bu yönüyle çalışma, bilgisayar mühendisliğinin sosyal fayda üretebilen disiplinlerden biri olduğunu somut bir örnek üzerinden ortaya koymaktadır.")
+
+    # ── 5.8 Değişiklik Yönetimi ─────────────────────────────────────────────
+    section(doc, "5.8. Değişiklik Yönetimi")
+    para(doc,
+        "Yazılım geliştirme sürecinde değişiklik yönetimi; kod kalitesinin korunması, geriye dönük uyumluluğun sağlanması ve geliştirici ekip içi koordinasyonun etkin biçimde yürütülmesi açısından kritik bir süreçtir. Bu çalışmada değişiklik yönetimi; sürüm kontrolü, commit konvansiyonu ve değişiklik günlüğü politikaları aracılığıyla sistematik biçimde uygulanmıştır.")
+    subsection(doc, "5.8.1. Git Akış Modeli ve Dal Stratejisi")
+    para(doc,
+        "Proje boyunca Git sürüm kontrol sistemi ve tek dal (single-branch) geliştirme modeli benimsenmiştir. Ana geliştirme dalı olan main üzerinde her anlamlı değişiklik, bağımsız bir commit olarak kaydedilmiştir. İlerleyen sürümlerde; feature (özellik), fix (hata düzeltmesi) ve release (sürüm) dallarından oluşan klasik Git Flow modeline geçiş önerilmektedir. Bu modelde her yeni özellik ayrı bir dal üzerinde geliştirilmekte, kod gözden geçirme (code review) sürecinin ardından main dala birleştirilmektedir.")
+    subsection(doc, "5.8.2. Commit Konvansiyonu")
+    para(doc,
+        "Commit mesajları, Conventional Commits standardı (https://www.conventionalcommits.org) temel alınarak yapılandırılmıştır. Bu standarda göre her commit mesajı; tür, kapsam ve açıklama olmak üzere üç bileşenden oluşmaktadır. Projede kullanılan commit türleri ve örnek mesajlar aşağıda listelenmiştir:")
+    items = [
+        "feat: yeni özellik ekleme — örnek: 'feat(detection): COCO sınıf filtresi ve güven eşiği artırıldı'",
+        "fix: hata düzeltmesi — örnek: 'fix(navigation): OSRM adım tetikleme mesafesi düzeltildi'",
+        "refactor: işlevsel değişiklik olmaksızın kod yeniden yapılandırma",
+        "test: unit veya entegrasyon testi ekleme/güncelleme",
+        "docs: dokümantasyon güncelleme",
+        "chore: bağımlılık güncellemesi veya yapılandırma değişikliği",
+    ]
+    for it in items:
+        para(doc, "• " + it)
+    subsection(doc, "5.8.3. Semantik Sürümleme")
+    para(doc,
+        "Uygulama sürümleri, Anlamsal Sürümleme (Semantic Versioning — SemVer) standardına uygun olarak numaralandırılmaktadır: BÜYÜK.KÜÇÜK.YAMA (MAJOR.MINOR.PATCH). Mevcut sürüm 1.0.0 olup bu sürüm; temel nesne algılama, sesli geri bildirim ve yaya yol tarifi işlevlerinin ilk kararlı yayınını temsil etmektedir. Geriye dönük uyumsuz API değişiklikleri MAJOR sürümü, yeni işlev eklemeleri MINOR sürümü, hata düzeltmeleri ise PATCH sürümünü artırmaktadır.")
+    subsection(doc, "5.8.4. Değişiklik Günlüğü Politikası")
+    para(doc,
+        "Her sürüm yayını öncesinde CHANGELOG.md dosyasına değişiklik özeti eklenmesi planlanmaktadır. Değişiklik günlüğü; eklenen özellikler, düzeltilen hatalar ve kullanımdan kaldırılan bileşenler başlıkları altında organize edilmektedir. Bu sayede kullanıcılar ve katkıda bulunanlar, hangi sürümde ne gibi değişikliklerin yapıldığını kolaylıkla takip edebilmektedir. Keep a Changelog (https://keepachangelog.com) formatı referans alınmaktadır.")
+
+    # ── 5.9 Mühendislik Standartları ────────────────────────────────────────
+    section(doc, "5.9. Mühendislik Standartları")
+    para(doc,
+        "VisionAssist; yalnızca işlevsel hedefler değil, sürdürülebilir ve kaliteli yazılım geliştirme ilkeleri de gözetilerek tasarlanmıştır. Bu bölümde uygulanan mühendislik standartları ve kalite güvence pratikleri açıklanmaktadır.")
+    subsection(doc, "5.9.1. Statik Tip Kontrolü ve TypeScript")
+    para(doc,
+        "Tüm kaynak kod TypeScript dili ile yazılmış olup strict mod etkinleştirilmiştir (\"strict\": true). Bu ayar; implicitAny, strictNullChecks, strictFunctionTypes ve strictPropertyInitialization kontrollerini otomatik olarak devreye almakta, çalışma zamanı hatalarının önemli bir bölümünü derleme aşamasında tespit etmeyi sağlamaktadır. Tüm servis sınıfları, hook'lar ve context sağlayıcıları açıkça tiplendirilmiştir; herhangi bir any tipi kullanımı yalnızca TFLite model çıktıları gibi üçüncü taraf native API'lerinde ve gerekçelendirilmiş biçimde yer almaktadır.")
+    subsection(doc, "5.9.2. Modüler Mimari ve Sorumluluk Ayrımı")
+    para(doc,
+        "Uygulama; screens (ekranlar), components (bileşenler), hooks (kancalar), services (servisler), context (durum yönetimi) ve utils (yardımcılar) katmanlarına ayrılmıştır. Her katman yalnızca kendi sorumluluğundaki işi yürütmekte; iş mantığı UI bileşenlerinden, algılama servisleri navigasyon servislerinden bağımsız tutulmaktadır. Bu mimari, bağımlılık grafiğini düz tutmakta ve herhangi bir bileşenin bağımsız olarak test edilmesine olanak sağlamaktadır.")
+    subsection(doc, "5.9.3. Erişilebilirlik Standartları")
+    para(doc,
+        "Kullanıcı arayüzü; Web İçerik Erişilebilirlik Yönergeleri (WCAG 2.1) AA düzeyi ve Apple/Google platforma özgü erişilebilirlik rehberleri doğrultusunda tasarlanmıştır. Uygulanan standartlar şunlardır:")
+    items = [
+        "Minimum dokunma alanı 56×56 piksel olarak belirlenmiştir; bu değer Apple İnsan Arayüzü Yönergeleri'nin önerdiği alt sınırın üzerindedir.",
+        "Tüm etkileşimli bileşenler accessibilityLabel, accessibilityRole ve accessibilityHint özellikleriyle tanımlanmıştır.",
+        "Renk kontrastı WCAG AA seviyesini karşılayacak biçimde; koyu lacivert arka plan üzerine beyaz metin (#FFFFFF) kullanılmıştır.",
+        "Sesli geri bildirim sistemi; TalkBack (Android) ve VoiceOver (iOS) ekran okuyucularla uyumlu çalışacak biçimde yapılandırılmıştır.",
+        "Tüm metinler sabit punto değerleri yerine FONT_SIZES sabiti üzerinden tanımlanmış olup ileride dinamik metin boyutlandırma desteğine hazırdır.",
+    ]
+    for it in items:
+        para(doc, "• " + it)
+    subsection(doc, "5.9.4. Test Stratejisi")
+    para(doc,
+        "Proje kapsamında birim testleri (unit tests) Jest test çerçevesi kullanılarak yazılmıştır. Test edilen bileşenler ve kapsama alanları şöyle özetlenebilir: DirectionAnalyzer (yön sınıflandırma doğruluğu), DistanceEstimator (mesafe kategori ataması), RiskEvaluator (risk seviyesi hesaplama ve cooldown davranışı) ve helpers modülü (localizeLabel, getObstacleMessage, getRiskColor, clamp). Toplam 42 test senaryosu yazılmış olup tüm testler başarıyla geçmektedir. Gelecek sürümlerde React Native Testing Library ile ekran bileşeni entegrasyon testleri ve Detox ile uçtan uca (E2E) test kapsamının genişletilmesi planlanmaktadır.")
+    subsection(doc, "5.9.5. Güvenli Kodlama Pratikleri")
+    para(doc,
+        "OWASP Mobil Uygulama Güvenlik Doğrulama Standardı (MASVS) temel alınarak aşağıdaki güvenli kodlama pratikleri uygulanmıştır: kullanıcı konumu ve uygulama ayarları yalnızca cihazda saklanmakta ve hiçbir bulut hizmetine aktarılmamaktadır; üçüncü taraf API çağrıları (Nominatim, OSRM) hata yönetimi ve zaman aşımı ile korunmaktadır; kamera erişimi yalnızca kullanıcı izni alındıktan sonra etkinleştirilmekte ve algılama durdurulduğunda serbest bırakılmaktadır.")
+
+    # ── 5.10 Ticaretleşme Planı ─────────────────────────────────────────────
+    section(doc, "5.10. Ticaretleşme Planı")
+    para(doc,
+        "Bu bölümde VisionAssist'in araştırma ortamından çıkarak gerçek kullanıcılara ulaşması için izlenebilecek ticaretleşme yol haritası sunulmaktadır. Plan; hedef pazar analizi, gelir modeli, dağıtım stratejisi ve işbirliği önerilerini kapsamaktadır.")
+    subsection(doc, "5.10.1. Hedef Pazar ve Kullanıcı Kitlesi")
+    para(doc,
+        "Türkiye İstatistik Kurumu (TÜİK) 2022 Engelli Bireylere Yönelik Araştırması verilerine göre Türkiye'de yaklaşık 950.000 görme engelli birey yaşamaktadır. Dünya genelinde ise Dünya Sağlık Örgütü'nün 2023 raporuna göre bu sayı 43 milyonu aşmaktadır. VisionAssist'in öncelikli hedef kitlesi; akıllı telefon kullanan, 18-65 yaş aralığındaki, bağımsız hareket etmek isteyen görme engelli ve az gören bireylerdir. İkincil hedef kitle ise bu bireylerin ailelerini, rehabilitasyon merkezlerini ve görme engellilere yönelik hizmet üreten kurum ve kuruluşları kapsamaktadır.")
+    subsection(doc, "5.10.2. Değer Teklifi")
+    para(doc,
+        "VisionAssist'in rakip ürünlerden temel farkı; cihaz üstü çalışan (internet gerektirmeyen) nesne algılama, açık kaynaklı harita servisleri ile bütünleşik yaya navigasyonu ve tam Türkçe dil desteğinin tek bir uygulamada sunulmasıdır. Piyasadaki benzer ürünler (Microsoft Seeing AI, Envision AI) tam Türkçe desteği sunmamakta ya da ücretli abonelik gerektirmektedir. VisionAssist'in temel uygulaması ücretsiz olarak sunulacak, bu durum geniş bir kullanıcı tabanına hızlı erişimi sağlayacaktır.")
+    subsection(doc, "5.10.3. Gelir Modeli")
+    para(doc,
+        "Freemium modeli benimsenerek sürdürülebilir bir gelir yapısı hedeflenmektedir. Temel sürüm ücretsiz olarak sunulurken premium katmanda ek özellikler ücretlendirilebilir. Olası gelir kanalları aşağıda sıralanmıştır:")
+    items = [
+        "Ücretsiz Temel Katman: Gerçek zamanlı nesne algılama, sokak/iç mekan modları, OpenStreetMap tabanlı navigasyon ve Türkçe/İngilizce TTS.",
+        "Premium Katman (aylık/yıllık abonelik): Özelleştirilebilir algılama öncelik listeleri, mekânsal (binaural) ses, toplu taşıma entegrasyonu ve bulut tabanlı ayar yedekleme.",
+        "Kurumsal Lisans: Rehberlik merkezleri, hastaneler ve üniversiteler için çok kullanıcılı yönetim paneli ve kuruma özel sesli rehber içerikleri.",
+        "Araştırma İşbirlikleri: Üniversiteler ve kamu kurumları ile ortak proje fonlaması (TÜBİTAK ARDEB/TEYDEB programları).",
+        "Hibe ve Sosyal Girişimcilik Destekleri: Avrupa Birliği Ufuk Avrupa Programı, T.C. Aile ve Sosyal Hizmetler Bakanlığı engelli bireylere yönelik teknoloji hibeleri.",
+    ]
+    for it in items:
+        para(doc, "• " + it)
+    subsection(doc, "5.10.4. Dağıtım ve Büyüme Stratejisi")
+    para(doc,
+        "Uygulamanın Google Play Store ve Apple App Store üzerinden dağıtımı planlanmaktadır. Kullanıcı tabanının büyütülmesi için aşağıdaki stratejiler önerilmektedir:")
+    items = [
+        "Sivil toplum kuruluşları ile işbirliği: Türkiye Körler Federasyonu, Görme Engelliler Derneği ve benzeri kuruluşlarla pilot kullanım programları.",
+        "Üniversite rehabilitasyon merkezleri: Engelli Öğrenci Birimleri aracılığıyla kampüs içi test ve kullanıcı geri bildirimi toplama.",
+        "Medya ve farkındalık: Erişilebilirlik odaklı teknoloji medyası ile işbirliği, bağımsız demo videoları ve açık kaynak topluluk katkısı.",
+        "App Store optimizasyonu (ASO): Anahtar kelime stratejisi, ekran görüntüleri ve erişilebilirlik odaklı uygulama açıklaması.",
+    ]
+    for it in items:
+        para(doc, "• " + it)
+    subsection(doc, "5.10.5. Üç Yıllık Yol Haritası")
+    para(doc,
+        "VisionAssist için önerilen yol haritası üç aşamada planlanmıştır. Birinci yıl (MVP olgunlaştırma): Özel veri kümesi ile model ince ayarı, Türkçe sesli komut desteği eklenmesi, cihaz içi derinlik tahmini entegrasyonu ve beta kullanıcı topluluğu oluşturulması. İkinci yıl (ölçeklendirme): Google Play ve App Store'da yayın, toplu taşıma canlı entegrasyonu, çoklu dil desteği (Arapça, Almanca) ve kurumsal lisans paketlerinin sunulması. Üçüncü yıl (büyüme ve sürdürülebilirlik): Giyilebilir cihaz entegrasyonu (akıllı gözlük API'si), topluluk tabanlı engel raporlama modülü, uluslararası pazar girişi ve sosyal girişim statüsü ile kamu-özel ortaklığı modellerinin hayata geçirilmesi.")
 
 
 # ============================================================

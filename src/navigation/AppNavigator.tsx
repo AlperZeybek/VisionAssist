@@ -40,11 +40,11 @@ function MainTabs() {
         name="Ana"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Ana Sayfa',
+          tabBarLabel: 'Ana Ekran',
           tabBarIcon: ({ focused }) => (
-            <Text style={styles.tabIcon}>{focused ? '🏠' : '🏡'}</Text>
+            <Text style={[styles.tabIcon, focused && styles.tabIconActive]}>🏠</Text>
           ),
-          tabBarAccessibilityLabel: 'Ana sayfa sekmesi',
+          tabBarAccessibilityLabel: 'Ana ekran sekmesi',
         }}
       />
       <Tab.Screen
@@ -53,7 +53,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Algılama',
           tabBarIcon: ({ focused }) => (
-            <Text style={styles.tabIcon}>{focused ? '📸' : '📷'}</Text>
+            <Text style={[styles.tabIcon, focused && styles.tabIconActive]}>📷</Text>
           ),
           tabBarAccessibilityLabel: 'Engel algılama sekmesi',
         }}
@@ -64,7 +64,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Ayarlar',
           tabBarIcon: ({ focused }) => (
-            <Text style={styles.tabIcon}>{focused ? '⚙️' : '🔧'}</Text>
+            <Text style={[styles.tabIcon, focused && styles.tabIconActive]}>⚙️</Text>
           ),
           tabBarAccessibilityLabel: 'Ayarlar sekmesi',
         }}
@@ -111,5 +111,9 @@ const styles = StyleSheet.create({
   },
   tabIcon: {
     fontSize: 24,
+    opacity: 0.6,
+  },
+  tabIconActive: {
+    opacity: 1,
   },
 });

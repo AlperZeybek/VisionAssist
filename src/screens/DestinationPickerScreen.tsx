@@ -1,13 +1,6 @@
 /**
  * VisionAssist - Hedef Seçim Ekranı
- *
- * Görme engelliler için tasarlanmış erişilebilir hedef belirleme akışı:
- * - Büyük "yakındaki" kategori kartları (eczane, hastane, market...)
- * - Manuel arama (Nominatim üzerinden)
- * - Sesli geri bildirim (her seçim ve sonuç sözle duyurulur)
- *
- * Hedef seçilince rota hesaplanır ve kullanıcı CameraScreen'e yönlendirilir
- * (yürürken hem engel hem yön rehberliği aynı anda çalışır).
+ * Görme engelliler için erişilebilir navigasyon hedefi belirleme akışı.
  */
 
 import React, { useCallback, useState } from 'react';
@@ -16,17 +9,17 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
   StatusBar,
   Alert,
+  Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
-import AccessibleButton from '../components/AccessibleButton';
 import {
   useNavigationContext,
   FavoritePlace,
@@ -38,6 +31,20 @@ import { COLORS, FONT_SIZES, SPACING, MIN_TOUCH_SIZE } from '../utils/constants'
 type RootStackParamList = {
   MainTabs: { screen?: string } | undefined;
   DestinationPicker: undefined;
+};
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const GRID_GAP = SPACING.sm;
+const CARD_WIDTH = (SCREEN_WIDTH - SPACING.lg * 2 - GRID_GAP) / 2;
+
+/** Kategori renk ve ikon eşlemesi (görseldeki renklerle uyumlu) */
+const CATEGORY_STYLE: Record<string, { bg: string; iconBg: string }> = {
+  pharmacy:  { bg: '#0F2A1A', iconBg: '#1B7A3A' },
+  hospital:  { bg: '#2A0F0F', iconBg: '#CC2222' },
+  market:    { bg: '#2A1A00', iconBg: '#CC6600' },
+  bus_stop:  { bg: '#0A1A2A', iconBg: '#1155CC' },
+  cafe:      { bg: '#1A120A', iconBg: '#7A4A00' },
+  park:      { bg: '#0F1E0F', iconBg: '#226622' },
 };
 
 export default function DestinationPickerScreen() {
@@ -60,22 +67,15 @@ export default function DestinationPickerScreen() {
 
   const handleRequestPermission = useCallback(async () => {
     const ok = await requestLocationPermission();
-    if (ok) {
-      speechService.speak('Konum izni verildi. Hedefinizi seçebilirsiniz.');
-    }
+    if (ok) speechService.speak('Konum izni verildi. Hedefinizi seçebilirsiniz.');
   }, [requestLocationPermission]);
 
   const handleFavoritePress = useCallback(
     async (favorite: FavoritePlace) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       if (!hasLocationPermission || !currentLocation) {
-        Alert.alert(
-          'Konum gerekli',
-          'Bu özelliği kullanmak için konum iznine ihtiyacımız var.'
-        );
-        speechService.speak(
-          'Bu özelliği kullanmak için önce konum izni vermelisiniz.'
-        );
+        Alert.alert('Konum gerekli', 'Bu özelliği kullanmak için konum iznine ihtiyacımız var.');
+        speechService.speak('Bu özelliği kullanmak için önce konum izni vermelisiniz.');
         return;
       }
       setIsStartingNav(true);
@@ -100,9 +100,7 @@ export default function DestinationPickerScreen() {
     if (found.length === 0) {
       speechService.speak('Sonuç bulunamadı.');
     } else {
-      speechService.speak(
-        `${found.length} sonuç bulundu. İlk sonuç: ${found[0].shortName}`
-      );
+      speechService.speak(`${found.length} sonuç bulundu. İlk sonuç: ${found[0].shortName}`);
     }
   }, [query, searchPlaces]);
 
@@ -122,117 +120,113 @@ export default function DestinationPickerScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryDark} />
+
+      {/* ── Mavi Header Bar ───────────────────────────────────── */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel="Geri"
+        >
+          <Text style={styles.backIcon}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Hedef Seçin</Text>
+        <View style={styles.headerSpacer} />
+      </View>
 
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Başlık */}
-        <View
-          accessible={true}
-          accessibilityRole="header"
-          style={styles.header}
-        >
-          <Text style={styles.appIcon}>🧭</Text>
-          <Text style={styles.title}>Nereye Gitmek İstersiniz?</Text>
-          <Text style={styles.subtitle}>
-            Yakındaki bir yer seçin veya arayın. Yürüyüş sırasında sesli rehberlik yapacağım.
-          </Text>
-        </View>
-
         {/* Konum İzni Uyarısı */}
         {!hasLocationPermission && (
-          <View
+          <TouchableOpacity
             style={styles.warningCard}
-            accessible={true}
-            accessibilityLabel="Konum izni gerekli uyarısı"
+            onPress={handleRequestPermission}
+            accessible
+            accessibilityLabel="Konum izni gerekli. Dokunarak izin verin."
           >
             <Text style={styles.warningIcon}>📍</Text>
             <Text style={styles.warningText}>
-              Navigasyon için konum izninize ihtiyacımız var.
+              Navigasyon için konum izni gerekli
             </Text>
-            <AccessibleButton
-              label="Konum İzni Ver"
-              onPress={handleRequestPermission}
-              icon="🔐"
-              variant="primary"
-              fullWidth
-              accessibilityHint="Cihaz konum izni ister"
-            />
-          </View>
+            <Text style={styles.warningAction}>İzin Ver</Text>
+          </TouchableOpacity>
         )}
 
-        {/* Hızlı seçim — favoriler */}
-        <Text style={styles.sectionTitle}>Hızlı Seçim</Text>
-        <View
-          accessible={true}
-          accessibilityLabel="Yakındaki hızlı kategoriler"
-          accessibilityRole="menu"
-        >
-          {favorites.map((fav) => (
-            <TouchableOpacity
-              key={fav.id}
-              style={styles.favoriteCard}
-              onPress={() => handleFavoritePress(fav)}
-              disabled={isStartingNav}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={fav.label}
-              accessibilityHint={fav.description}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.favoriteIcon}>{fav.icon}</Text>
-              <View style={styles.favoriteContent}>
-                <Text style={styles.favoriteLabel}>{fav.label}</Text>
-                <Text style={styles.favoriteDescription}>
-                  {fav.description}
+        {/* ── HIZLI SEÇİM ─────────────────────────────────────── */}
+        <Text style={styles.sectionTitle}>HIZLI SEÇİM</Text>
+        <View style={styles.grid}>
+          {favorites.map((fav) => {
+            const style = CATEGORY_STYLE[fav.id] ?? { bg: COLORS.surface, iconBg: COLORS.primary };
+            return (
+              <TouchableOpacity
+                key={fav.id}
+                style={[styles.gridCard, { backgroundColor: style.bg }]}
+                onPress={() => handleFavoritePress(fav)}
+                disabled={isStartingNav}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={fav.label}
+                accessibilityHint={fav.description}
+                activeOpacity={0.75}
+              >
+                <View style={[styles.gridIconBox, { backgroundColor: style.iconBg }]}>
+                  <Text style={styles.gridIcon}>{fav.icon}</Text>
+                </View>
+                <Text style={styles.gridLabel} numberOfLines={1}>
+                  {fav.label}
                 </Text>
-              </View>
-              <Text style={styles.favoriteArrow}></Text>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        {/* Manuel arama */}
-        <Text style={styles.sectionTitle}>Yer Ara</Text>
+        {/* ── VEYA ARA ────────────────────────────────────────── */}
+        <Text style={[styles.sectionTitle, styles.sectionTitleSpaced]}>VEYA ARA</Text>
+
+        {/* Arama Alanı */}
         <View style={styles.searchRow}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Adres, mahalle veya işletme..."
+            placeholder="Hedef adresi yazın..."
             placeholderTextColor={COLORS.textDisabled}
             value={query}
             onChangeText={setQuery}
             onSubmitEditing={handleSearch}
             returnKeyType="search"
-            accessible={true}
+            accessible
             accessibilityLabel="Hedef arama kutusu"
             accessibilityHint="Gitmek istediğiniz yerin adını yazın"
           />
+          <TouchableOpacity
+            style={styles.searchIconButton}
+            onPress={handleSearch}
+            disabled={isSearching}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel="Ara"
+          >
+            <Text style={styles.searchIconText}>🔍</Text>
+          </TouchableOpacity>
         </View>
-        <AccessibleButton
-          label={isSearching ? 'Aranıyor...' : 'Ara'}
-          onPress={handleSearch}
-          icon="🔍"
-          variant="primary"
-          fullWidth
-          disabled={isSearching || query.trim().length < 2}
-          accessibilityHint="Yazdığınız yeri arar"
-        />
 
-        {/* Arama sonuçları */}
+        {/* Arama Sonuçları */}
         {results.length > 0 && (
           <View style={styles.resultsSection}>
-            <Text style={styles.sectionTitle}>Sonuçlar</Text>
             {results.map((place, idx) => (
               <TouchableOpacity
                 key={`${place.placeId ?? idx}`}
                 style={styles.resultCard}
                 onPress={() => handleResultPress(place)}
                 disabled={isStartingNav}
-                accessible={true}
+                accessible
                 accessibilityRole="button"
                 accessibilityLabel={place.shortName}
                 accessibilityHint={place.displayName}
@@ -252,7 +246,7 @@ export default function DestinationPickerScreen() {
           </View>
         )}
 
-        {/* Yükleniyor durumu */}
+        {/* Yükleniyor */}
         {(isSearching || isStartingNav) && (
           <View style={styles.loadingRow}>
             <ActivityIndicator color={COLORS.primary} size="large" />
@@ -262,17 +256,21 @@ export default function DestinationPickerScreen() {
           </View>
         )}
 
-        {/* İptal */}
-        <View style={styles.cancelSection}>
-          <AccessibleButton
-            label="İptal Et"
-            onPress={() => navigation.goBack()}
-            icon="✖️"
-            variant="secondary"
-            fullWidth
-            accessibilityHint="Hedef seçimini iptal eder ve geri döner"
-          />
-        </View>
+        {/* ── Rota Oluştur ─────────────────────────────────────── */}
+        <TouchableOpacity
+          style={[
+            styles.routeButton,
+            (isStartingNav || query.trim().length < 2) && styles.routeButtonDisabled,
+          ]}
+          onPress={handleSearch}
+          disabled={isStartingNav || query.trim().length < 2}
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel="Rota Oluştur"
+        >
+          <Text style={styles.routeButtonIcon}>📍</Text>
+          <Text style={styles.routeButtonText}>Rota Oluştur</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -280,122 +278,196 @@ export default function DestinationPickerScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  content: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl,
-    paddingBottom: SPACING.xxl,
-  },
-  header: { alignItems: 'center', marginBottom: SPACING.xl },
-  appIcon: { fontSize: 56, marginBottom: SPACING.sm },
-  title: {
-    fontSize: FONT_SIZES.xlarge,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: FONT_SIZES.small,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: SPACING.sm,
-    lineHeight: 22,
-  },
-  warningCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.accent,
-    marginBottom: SPACING.lg,
+
+  // Mavi header
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: COLORS.primaryDark,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
     gap: SPACING.sm,
   },
-  warningIcon: { fontSize: 40 },
-  warningText: {
-    color: COLORS.textPrimary,
-    fontSize: FONT_SIZES.medium,
-    textAlign: 'center',
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  sectionTitle: {
+  backIcon: {
+    color: COLORS.textPrimary,
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  headerTitle: {
+    flex: 1,
+    color: COLORS.textPrimary,
     fontSize: FONT_SIZES.large,
     fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.md,
-    marginTop: SPACING.lg,
+    textAlign: 'center',
   },
-  favoriteCard: {
+  headerSpacer: { width: 40 },
+
+  scroll: { flex: 1 },
+  content: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.xxl,
+  },
+
+  // Konum uyarısı
+  warningCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 149, 0, 0.12)',
+    borderRadius: 12,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 149, 0, 0.3)',
+    gap: SPACING.sm,
+  },
+  warningIcon: { fontSize: 22 },
+  warningText: {
+    flex: 1,
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZES.small - 2,
+  },
+  warningAction: {
+    color: COLORS.accent,
+    fontSize: FONT_SIZES.small - 2,
+    fontWeight: '700',
+  },
+
+  // Bölüm başlığı
+  sectionTitle: {
+    fontSize: FONT_SIZES.small - 2,
+    fontWeight: '700',
+    color: COLORS.textSecondary,
+    letterSpacing: 1.1,
+    marginBottom: SPACING.sm,
+  },
+  sectionTitleSpaced: {
+    marginTop: SPACING.xl,
+  },
+
+  // 2 sütun grid
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: GRID_GAP,
+  },
+  gridCard: {
+    width: CARD_WIDTH,
+    minHeight: MIN_TOUCH_SIZE + 24,
+    borderRadius: 14,
+    padding: SPACING.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  gridIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gridIcon: { fontSize: 22 },
+  gridLabel: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZES.small - 2,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+
+  // Arama
+  searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    minHeight: MIN_TOUCH_SIZE + 24,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
+    marginBottom: SPACING.lg,
+    overflow: 'hidden',
   },
-  favoriteIcon: { fontSize: 36, marginRight: SPACING.md },
-  favoriteContent: { flex: 1 },
-  favoriteLabel: {
-    color: COLORS.textPrimary,
-    fontSize: FONT_SIZES.medium,
-    fontWeight: '700',
-  },
-  favoriteDescription: {
-    color: COLORS.textSecondary,
-    fontSize: FONT_SIZES.small - 2,
-    marginTop: 2,
-  },
-  favoriteArrow: {
-    color: COLORS.textSecondary,
-    fontSize: FONT_SIZES.large,
-    fontWeight: '600',
-    marginLeft: SPACING.sm,
-  },
-  searchRow: { marginBottom: SPACING.md },
   searchInput: {
-    backgroundColor: COLORS.surface,
+    flex: 1,
     color: COLORS.textPrimary,
-    fontSize: FONT_SIZES.medium,
+    fontSize: FONT_SIZES.small,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
     minHeight: MIN_TOUCH_SIZE,
   },
-  resultsSection: { marginTop: SPACING.md },
+  searchIconButton: {
+    width: MIN_TOUCH_SIZE,
+    height: MIN_TOUCH_SIZE,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchIconText: { fontSize: 22 },
+
+  // Arama sonuçları
+  resultsSection: { marginBottom: SPACING.md },
   resultCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
     minHeight: MIN_TOUCH_SIZE,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    gap: SPACING.sm,
   },
-  resultIcon: { fontSize: 24, marginRight: SPACING.sm },
+  resultIcon: { fontSize: 20 },
   resultContent: { flex: 1 },
   resultTitle: {
     color: COLORS.textPrimary,
-    fontSize: FONT_SIZES.medium,
+    fontSize: FONT_SIZES.small,
     fontWeight: '700',
   },
   resultDetail: {
     color: COLORS.textSecondary,
-    fontSize: FONT_SIZES.small - 2,
+    fontSize: FONT_SIZES.small - 4,
     marginTop: 2,
   },
+
+  // Yükleniyor
   loadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.md,
-    marginTop: SPACING.lg,
+    marginBottom: SPACING.lg,
   },
   loadingText: {
     color: COLORS.textSecondary,
-    fontSize: FONT_SIZES.medium,
+    fontSize: FONT_SIZES.small,
   },
-  cancelSection: { marginTop: SPACING.xl },
+
+  // Rota Oluştur butonu
+  routeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: 14,
+    paddingVertical: SPACING.md,
+    gap: SPACING.sm,
+    minHeight: MIN_TOUCH_SIZE,
+  },
+  routeButtonDisabled: {
+    opacity: 0.4,
+  },
+  routeButtonIcon: { fontSize: 20 },
+  routeButtonText: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZES.medium,
+    fontWeight: '700',
+  },
 });

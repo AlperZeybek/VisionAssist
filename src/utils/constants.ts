@@ -8,6 +8,91 @@
 import { AppSettings, DetectionMode } from './types';
 
 // ==========================================
+// NESNE FİLTRE SABİTLERİ
+// ==========================================
+
+/**
+ * Görme engelli yardımı için ANLAMLI COCO sınıfları.
+ * Bu küme dışındaki algılamalar (havuç, tavşan, uçak vb.) tamamen yok sayılır.
+ * Yanlış pozitif uyarılar bir görme engelli için hayati tehlike yaratabilir.
+ */
+export const ALLOWED_LABELS = new Set<string>([
+  // ── Yayalar ve araçlar (en kritik) ──
+  'person', 'bicycle', 'car', 'motorcycle', 'bus', 'truck',
+  // ── İç mekan mobilyası / engeller ──
+  'chair', 'couch', 'dining table', 'bed', 'toilet', 'sink',
+  'refrigerator', 'microwave', 'oven', 'potted plant',
+  // ── Dış mekan sabit engeller ──
+  'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench',
+  // ── Taşınan / bırakılan nesneler ──
+  'backpack', 'handbag', 'suitcase', 'umbrella', 'bottle',
+  // ── Elektronik / küçük nesneler (masa üstü çarpma riski) ──
+  'laptop', 'tv', 'clock',
+  // ── Hayvanlar (dış mekanda karşılaşılabilir) ──
+  'dog',
+]);
+
+/**
+ * Sınıf başına minimum güven eşiği.
+ * Belirtilmeyen sınıflar DEFAULT_MIN_CONFIDENCE değerini kullanır.
+ * Yüksek eşik = daha az yanlış pozitif.
+ */
+export const PER_CLASS_MIN_CONFIDENCE: Record<string, number> = {
+  // Çok kritik — düşük eşik kabul (kaçırma riski yüksek)
+  person:       0.60,
+  car:          0.60,
+  motorcycle:   0.60,
+  bus:          0.60,
+  truck:        0.60,
+  bicycle:      0.62,
+  // İç mekan nesneleri — yüksek eşik (zemin deseni vs. karışıklık)
+  chair:        0.65,
+  couch:        0.65,
+  'dining table': 0.65,
+  bed:          0.65,
+  toilet:       0.65,
+  // Diğerleri
+  dog:          0.65,
+  'traffic light': 0.60,
+  bench:        0.65,
+  'potted plant': 0.68,
+  sink:         0.68,
+  refrigerator: 0.65,
+};
+
+/** Filtreli sınıflarda genel minimum eşik */
+export const DEFAULT_MIN_CONFIDENCE = 0.65;
+
+/** Temporal smoothing — kaç ardışık karede görünmeli (duyurmadan önce) */
+export const TEMPORAL_SMOOTHING_FRAMES = 2;
+
+/**
+ * Sokak modunda yüksek öncelikli sınıflar.
+ * Bu nesneler MEDIUM mesafede bile sesli uyarı üretir.
+ */
+export const STREET_HIGH_PRIORITY = new Set<string>([
+  'person', 'car', 'motorcycle', 'bus', 'truck', 'bicycle',
+  'traffic light', 'fire hydrant', 'stop sign',
+]);
+
+/**
+ * İç mekan modunda yüksek öncelikli sınıflar.
+ */
+export const INDOOR_HIGH_PRIORITY = new Set<string>([
+  'person', 'chair', 'couch', 'dining table', 'bed',
+  'toilet', 'potted plant', 'dog',
+]);
+
+/**
+ * Navigasyon modunda sadece NEAR mesafede uyarı verilecek sınıflar.
+ * (Navigasyon talimatları kesilmesin diye filtre daha katı.)
+ */
+export const NAVIGATION_ALERT_ONLY_NEAR = new Set<string>([
+  'chair', 'couch', 'dining table', 'bench', 'potted plant',
+  'backpack', 'suitcase', 'umbrella', 'bottle',
+]);
+
+// ==========================================
 // ALGILAMA SABİTLERİ
 // ==========================================
 
