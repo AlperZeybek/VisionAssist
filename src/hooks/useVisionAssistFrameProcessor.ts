@@ -5,6 +5,8 @@ import { useRunOnJS } from 'react-native-worklets-core';
 import { ObstacleInfo, RiskLevel, Direction, Distance, DetectionMode } from '../utils/types';
 import {
   ALLOWED_LABELS,
+  INDOOR_ALLOWED_LABELS,
+  STREET_ALLOWED_LABELS,
   PER_CLASS_MIN_CONFIDENCE,
   DEFAULT_MIN_CONFIDENCE,
   TEMPORAL_SMOOTHING_FRAMES,
@@ -72,9 +74,12 @@ export function useVisionAssistFrameProcessor(
       const boxes = outputs[0];   // [ymin, xmin, ymax, xmax]  (normalize 0-1)
       const classes = outputs[1]; // sınıf indeksleri
       const scores = outputs[2];  // güven skorları
+      // EfficientDet-Lite0: 4. output = geçerli tespit sayısı
+      const countTensor = outputs.length >= 4 ? outputs[3] : null;
 
-      const numDetections =
-        typeof classes.length !== 'undefined' ? classes.length : 10;
+      const numDetections = countTensor
+        ? Math.round(countTensor[0] ?? 25)
+        : (typeof classes.length !== 'undefined' ? classes.length : 10);
 
       // ── Bu karede hangi key'ler güncellendi? ──────────────────────────────
       const seenKeys = new Set<string>();
@@ -85,8 +90,14 @@ export function useVisionAssistFrameProcessor(
         const classIdx = Math.round(classes[i] ?? 0);
         const label = (labels[classIdx] ?? '').toLowerCase().trim();
 
-        // 1. İzin verilmeyen sınıfı tamamen yok say
+        // 1. Genel izin listesi kontrolü
         if (!ALLOWED_LABELS.has(label)) continue;
+
+        // 1b. MOD BAZLI FİLTRE: iç mekanda araç/trafik, dışarıda mobilya yok
+        const modeAllowed = mode === DetectionMode.INDOOR
+          ? INDOOR_ALLOWED_LABELS
+          : STREET_ALLOWED_LABELS;
+        if (!modeAllowed.has(label)) continue;
 
         // 2. Sınıfa özgü güven eşiğini kontrol et
         const minConf = getMinConfidence(label);
@@ -186,7 +197,7 @@ export function useVisionAssistFrameProcessor(
 
       try {
         const resizedFrame = resize(frame, {
-          scale: { width: 300, height: 300 },
+          scale: { width: 320, height: 320 },
           pixelFormat: 'rgb',
           dataType: 'uint8',
         });

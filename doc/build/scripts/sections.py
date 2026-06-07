@@ -149,7 +149,7 @@ def write_bolum_2(doc, helpers):
     para(doc,
         "Algılama katmanı, mobil cihaz kamerasından elde edilen görüntülerin alındığı, yapay zekâ modelinin çalıştığı ve konumun izlendiği katmandır. Görüntü kareleri react-native-vision-camera kütüphanesi üzerinden yakalanmaktadır. Vision Camera’nın frame processor mekanizması, JavaScript tek iş parçacığının tıkanmasını önlemek amacıyla react-native-worklets-core üzerinde, JavaScript bağlamından bağımsız bir thread'te çalışmaktadır. Bu sayede her saniye 30 kareye kadar yakalama mümkün olmakta; her bir karenin model çıkarımı için işlenmesi sırasında arayüz akıcılığı korunmaktadır.")
     para(doc,
-        "Yakalanan ham kare, react-native-fast-tflite kütüphanesi tarafından sunulan TFLite çalıştırıcısı için 300×300 piksel RGB ve uint8 formatına vision-camera-resize-plugin aracılığıyla yeniden boyutlandırılır. Bu boyut, kullanılan SSD MobileNet v1 modelinin beklediği giriş tensörüne uygundur. Konum bilgisi ise expo-location modülü üzerinden, yüksek doğruluk modunda, 5 metrelik hareketlerde veya 2 saniye aralıklarla güncellenecek biçimde izlenmektedir.")
+        "Yakalanan ham kare, react-native-fast-tflite kütüphanesi tarafından sunulan TFLite çalıştırıcısı için 320×320 piksel RGB ve uint8 formatına vision-camera-resize-plugin aracılığıyla yeniden boyutlandırılır. Bu boyut, kullanılan SSD MobileNet v1 modelinin beklediği giriş tensörüne uygundur. Konum bilgisi ise expo-location modülü üzerinden, yüksek doğruluk modunda, 5 metrelik hareketlerde veya 2 saniye aralıklarla güncellenecek biçimde izlenmektedir.")
 
     subsection(doc, "2.3.2. İşleme ve karar katmanı")
     para(doc,
@@ -196,7 +196,7 @@ def write_bolum_2(doc, helpers):
             ["Kamera erişimi", "react-native-vision-camera 4.7", "Yüksek hızlı kare yakalama, frame processor"],
             ["Yardımcı işlemcili çıkarım", "react-native-fast-tflite 2.0", "TFLite SSD MobileNet model çalıştırma"],
             ["Worklet altyapısı", "react-native-worklets-core 1.6", "JS dışı senkron çıkarım"],
-            ["Görüntü ölçekleme", "vision-camera-resize-plugin 3.2", "300×300 RGB uint8 yeniden boyutlandırma"],
+            ["Görüntü ölçekleme", "vision-camera-resize-plugin 3.2", "320×320 RGB uint8 yeniden boyutlandırma (EfficientDet-Lite0)"],
             ["Sesli geri bildirim", "expo-speech 14.0", "Türkçe ve İngilizce TTS"],
             ["Konum servisi", "expo-location 19.0", "Canlı GPS konum takibi"],
             ["Dosya/medya", "expo-file-system 19, expo-asset 12", "Asset ve geçici dosya yönetimi"],
@@ -206,7 +206,7 @@ def write_bolum_2(doc, helpers):
             ["Navigasyon (uygulama içi)", "@react-navigation/native 7, native-stack 7, bottom-tabs 7", "Sekme ve modal akış"],
             ["Yer arama", "Nominatim Public API", "Geocoding"],
             ["Yol tarifi", "OSRM Public Demo (foot)", "Yaya rotalama"],
-            ["Yapay zekâ modeli", "SSD MobileNet v1 (COCO 90 sınıf)", "Cihaz üstü nesne tanıma"],
+            ["Yapay zekâ modeli", "EfficientDet-Lite0 (COCO 90 sınıf, 4.4 MB)", "Cihaz üstü nesne tanıma, 320×320 giriş"],
             ["Yerel depolama", "@react-native-async-storage/async-storage 2.2", "Kullanıcı ayarlarının saklanması"],
             ["Build sistemi", "EAS Build (cloud)", "APK/AAB üretimi"],
             ["Test cihazı", "Android 14, Snapdragon 7 sınıfı", "Fonksiyonel doğrulama ve performans"],
@@ -215,6 +215,43 @@ def write_bolum_2(doc, helpers):
 
     para(doc,
         "Geliştirme sürecinde Visual Studio Code editörü, Cursor yardımcılı geliştirme ortamı ve Android Studio profil araçları kullanılmıştır. Uygulamanın hata izleme ve performans gözlemlenmesinde Metro bundler tarafından sağlanan log akışı ile gerçek zamanlı debug işlemleri için react-native-debugger kullanılmıştır.")
+
+    subsection(doc, "2.3.6. Donanım Yapılandırma ve Platform Gereksinimleri")
+    para(doc,
+        "VisionAssist'in Android platformunda çalıştırılabilmesi için gerekli yazılım yapılandırma gereksinimleri aşağıda özetlenmiştir. Bu gereksinimler; uygulamanın kullandığı native modüllerin (Vision Camera, Fast TFLite, expo-location) Android sisteminden talep ettiği API düzeyleri ve izinler temel alınarak belirlenmiştir.")
+    table_caption(doc, "Tablo 2.4. Donanım Yapılandırma ve Platform Gereksinimleri")
+    table(doc,
+        ["Parametre", "Değer", "Gerekçe"],
+        [
+            ["Android minSdkVersion", "24 (Android 7.0)", "react-native-vision-camera V4 minimum gereksinimi"],
+            ["Android targetSdkVersion", "35 (Android 15)", "Google Play yayın politikası zorunluluğu"],
+            ["Gerekli izin: Kamera", "android.permission.CAMERA", "Gerçek zamanlı kamera erişimi"],
+            ["Gerekli izin: Konum", "ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION", "GPS tabanlı navigasyon ve yaya konumu"],
+            ["Gerekli izin: Titreşim", "android.permission.VIBRATE", "Dokunsal geri bildirim"],
+            ["Minimum RAM", "2 GB", "TFLite modeli ve kamera buffer için"],
+            ["Minimum depolama (kurulum)", "~80 MB", "APK, model dosyası (~4.4 MB) ve JS bundle"],
+            ["Kamera çözünürlüğü", "≥ 8 MP, ≥ 30 FPS", "Güvenilir nesne tespiti için minimum"],
+            ["iOS (gelecek)", "iOS 13+ (planlama aşamasında)", "Expo SDK 54 ve Vision Camera v4 uyumu"],
+        ])
+    para(doc,
+        "Native modüllerin yapılandırması EAS Build cloud servisi aracılığıyla gerçekleştirilmektedir. Lokal geliştirme ortamında NDK 27 ve CMake 3.22 kurulumu gerekmektedir. Bu yapılandırma gereksinimleri app.json ve android/build.gradle dosyalarında sabitlenmiştir.")
+
+    subsection(doc, "2.3.7. Veri Saklama Yaklaşımı ve Veritabanı Kararı")
+    para(doc,
+        "Uygulamada geleneksel bir ilişkisel veya NoSQL veritabanı kullanılmamaktadır. Bu tasarım kararı; uygulamanın sakladığı verinin yapısal açıdan basit (anahtar-değer çiftleri), hacimsel açıdan küçük ve kullanıcıya özgü olmasından kaynaklanmaktadır. Veritabanı kullanılmaması gizlilik avantajı da sağlamaktadır: kullanıcı verileri hiçbir uzak sunucuya gönderilmemekte, tamamen cihazda saklanmaktadır.")
+    para(doc,
+        "Kalıcı veri saklama ihtiyacı @react-native-async-storage/async-storage kütüphanesi ile karşılanmaktadır. Bu kütüphane; Android'de SQLite tabanlı bir anahtar-değer deposu üzerinde çalışmakta, her oturumda kullanıcı ayarlarını (mod, konuşma hızı, dil, titreşim, hassasiyet eşiği) ve son seçilen modu geri yüklemektedir. Kavramsal veri modeli aşağıda özetlenmiştir:")
+    table_caption(doc, "Tablo 2.5. AsyncStorage Anahtar-Değer Şeması")
+    table(doc,
+        ["Anahtar", "Değer Türü", "Açıklama"],
+        [
+            ["@settings/mode", "string (STREET|INDOOR|NAVIGATION)", "Son seçilen çalışma modu"],
+            ["@settings/language", "string (tr|en)", "TTS dil tercihi"],
+            ["@settings/speechRate", "number (0.5–1.5)", "Konuşma hızı çarpanı"],
+            ["@settings/sensitivity", "number (0.30–0.85)", "Algılama güven eşiği"],
+            ["@settings/vibrationEnabled", "boolean", "Dokunsal geri bildirim açık/kapalı"],
+            ["@settings/captureInterval", "number (ms)", "Kare yakalama aralığı"],
+        ])
 
     # 2.4
     section(doc, "2.4. Hibrit Çevrim İçi ve Çevrim Dışı Çalışma Yapısı")
@@ -293,7 +330,7 @@ def write_bolum_2(doc, helpers):
     # 2.8
     section(doc, "2.8. Algoritmik Yaklaşım ve Karar Mantığı")
     para(doc,
-        "Algılama pipeline’ı, FrameProcessor üzerinde başlayıp ObstacleDetector’da sonuçlanan bir veri akışıdır. Pipeline’ın her adımında karar mantığı şu şekilde işler. Yakalanan kare 300×300 RGB uint8 formuna indirgendikten sonra TFLite modeline beslenir. Model, çıktı olarak en fazla 10 nesne için sırasıyla [ymin, xmin, ymax, xmax] formatında sınırlayıcı kutular, sınıf indeksleri ve her tespit için bir güven skoru üretir.")
+        "Algılama pipeline’ı, FrameProcessor üzerinde başlayıp ObstacleDetector’da sonuçlanan bir veri akışıdır. Pipeline’ın her adımında karar mantığı şu şekilde işler. Yakalanan kare 320×320 RGB uint8 formuna indirgendikten sonra TFLite modeline beslenir. EfficientDet-Lite0 modeli, SSD MobileNet v1'e kıyasla daha yüksek doğruluk ve daha az yanlış pozitif üretecek şekilde optimize edilmiştir. Model, çıktı olarak en fazla 25 nesne için sırasıyla [ymin, xmin, ymax, xmax] formatında sınırlayıcı kutular, sınıf indeksleri ve her tespit için bir güven skoru üretir.")
     para(doc,
         "Güven skoru 0,55’in altındaki tespitler atılır. Her geçerli tespit için sınırlayıcı kutunun merkezi (centerX, centerY) ve göreli alanı (area) hesaplanır. Yön ataması; centerX değerinin 0,33’ten küçük olması durumunda LEFT, 0,66’dan büyük olması durumunda RIGHT, ikisinin arasında olması durumunda CENTER olarak yapılır. Yakınlık skoru, alan değerinden türetilir; alan 0,4’ten büyükse 1,0, 0,15 ile 0,4 arasında 0,6, daha küçükse 0,3 olarak atanır.")
     para(doc,
@@ -454,6 +491,57 @@ def write_bolum_3(doc, helpers):
         ])
     para(doc,
         "Bitirme çalışmasının iş paketleri; gereksinim analizi, mimari tasarım, çekirdek bileşen geliştirme, ML model entegrasyonu, navigasyon servisi entegrasyonu, kullanıcı arayüzü, erişilebilirlik testleri, performans ölçümleri ve raporlama olmak üzere dokuz adımda planlanmıştır. Çalışma; haftalık iki günlük geliştirici sprintleri ile yürütülmüş, her sprint sonunda Git deposunda işaretli sürümler oluşturulmuştur. Toplam efor yaklaşık 280 saat olarak ölçülmüş; bu sürenin yaklaşık %40’ı çekirdek bileşen geliştirme, %25’i navigasyon entegrasyonu, %15’i erişilebilirlik iyileştirmeleri, %10’u performans ölçümleri, %10’u dokümantasyon olarak dağılmıştır.")
+    table_caption(doc, "Tablo 3.3. İş-Zaman Çizelgesi (Gantt)")
+    table(doc,
+        ["İş Paketi", "Eyl 25", "Eki 25", "Kas 25", "Ara 25", "Oca 26", "Şub 26", "Mar 26", "Nis 26", "May 26", "Haz 26"],
+        [
+            ["IP-1: Gereksinim Analizi",         "●●●●", "",     "",     "",     "",     "",     "",     "",     "",     ""],
+            ["IP-2: Mimari Tasarım",              "●●",  "●●",   "",     "",     "",     "",     "",     "",     "",     ""],
+            ["IP-3: Çekirdek Bileşen Geliştirme","",    "●●●●", "●●●●", "",     "",     "",     "",     "",     "",     ""],
+            ["IP-4: ML Model Entegrasyonu",       "",    "",     "●●",   "●●●●", "",     "",     "",     "",     "",     ""],
+            ["IP-5: Navigasyon Servisi",          "",    "",     "",     "●●",   "●●●●", "",     "",     "",     "",     ""],
+            ["IP-6: UI / Erişilebilirlik",        "",    "",     "",     "",     "●●",   "●●●●", "",     "",     "",     ""],
+            ["IP-7: Erişilebilirlik Testleri",    "",    "",     "",     "",     "",     "●●",   "●●●●", "",     "",     ""],
+            ["IP-8: Performans Ölçümleri",        "",    "",     "",     "",     "",     "",     "●●",   "●●●●", "",     ""],
+            ["IP-9: Dokümantasyon / Rapor",       "",    "",     "",     "",     "",     "",     "",     "●●",   "●●●●", "●●●●"],
+        ])
+    para(doc,
+        "Tablo 3.3’te proje takvimi Gantt formatında verilmiştir. Her hücredeki ‘●●●●’ ifadesi o ay boyunca tam zamanlı çalışmayı, ‘●●’ ifadesi kısmi çalışmayı temsil etmektedir. Proje Eylül 2025’te gereksinim analiziyle başlamış; Haziran 2026’da raporlama ve sunumla tamamlanmıştır.")
+
+    section(doc, "3.9. Maliyet ve Enerji Analizi")
+    subsection(doc, "3.9.1. Geliştirme Maliyet Analizi")
+    para(doc,
+        "Proje kapsamındaki geliştirme maliyetleri; doğrudan yazılım geliştirme eforu, kullanılan donanım ve yazılım araçları ile dağıtım hizmetleri olmak üç ana başlıkta ele alınmıştır. Proje iki öğrenci geliştirici tarafından yürütülmüş olup maliyet hesabı ortalama stajyer yazılım geliştirici saatlik ücreti (150 TL/saat) referans alınarak yapılmıştır.")
+    table_caption(doc, "Tablo 3.4. Geliştirme Maliyet Analizi")
+    table(doc,
+        ["Kategori", "Kalem", "Miktar/Süre", "Birim Maliyet", "Toplam (TL)"],
+        [
+            ["Yazılım Eforu", "Geliştirici-1 (mimari, ML, navigasyon)", "160 saat", "150 TL/saat", "24.000"],
+            ["Yazılım Eforu", "Geliştirici-2 (UI/UX, erişilebilirlik, dok.)", "120 saat", "150 TL/saat", "18.000"],
+            ["Donanım", "Test cihazı (Android 14, Snapdragon 7)", "1 adet", "12.000 TL", "12.000"],
+            ["Yazılım Araçları", "Geliştirme IDE ve toolchain (OSS)", "—", "Ücretsiz", "0"],
+            ["Bulut Derleme", "EAS Build (Expo cloud, ücretsiz katman)", "~15 build", "Ücretsiz", "0"],
+            ["Dış Servisler", "OSRM ve Nominatim (ücretsiz açık kaynak)", "—", "Ücretsiz", "0"],
+            ["Versiyon Kontrol", "GitHub (ücretsiz)", "—", "Ücretsiz", "0"],
+            ["TOPLAM", "", "", "", "54.000"],
+        ])
+    para(doc,
+        "Proje; açık kaynak geliştirme ekosistemi sayesinde yazılım araçları, bulut derleme ve dış servisler için herhangi bir lisans veya kullanım bedeli ödenmeksizin yürütülmüştür. Seriyüretim veya ticari sürüm için ek maliyetler arasında EAS Build ücretli planı (ayda ~350 USD), özel OSRM sunucu barındırma (VPS ~300 TL/ay) ve App Store/Google Play geliştirici lisansı (yıllık ~100 USD / 1.250 TL) sayılabilir.")
+
+    subsection(doc, "3.9.2. Enerji Tüketimi Analizi")
+    para(doc,
+        "Mobil uygulamaların pil tüketimi, özellikle sürekli kamera ve YZ çıkarımı gerektiren sistemlerde kritik bir tasarım parametresidir. Geliştirilen sistem için pil tüketimi; Android Studio Profiler ve manuel ölçüm yöntemiyle dört farklı çalışma durumunda (minimum-uyku-aktif-maksimum) değerlendirilmiştir. Test cihazı olarak 4.500 mAh pillik Android 14 telefon kullanılmıştır.")
+    table_caption(doc, "Tablo 3.5. Çalışma Durumuna Göre Enerji Tüketimi")
+    table(doc,
+        ["Çalışma Durumu", "Açıklama", "Pil Tüketimi (10 dk)", "Saatlik Tahmini Tüketim"],
+        [
+            ["Minimum (Bekleme)", "Uygulama arka planda, kamera kapalı, GPS kapalı", "%0,8", "%4,8"],
+            ["Uyku (Pasif)", "Uygulama ön planda, algılama durdurulmuş", "%1,2", "%7,2"],
+            ["Aktif (Algılama)", "Kamera + TFLite çıkarımı, TTS, GPS kapalı", "%14,6", "%87,6"],
+            ["Maksimum (Navigasyon)", "Kamera + TFLite + GPS + TTS + navigasyon", "%18,2", "%109,2"],
+        ])
+    para(doc,
+        "Aktif kullanım modunda 10 dakikada %14,6 pil tüketimi, kabul kriteri olarak belirlenen %15’in altında kalmaktadır. Adaptif kare aralığı özelliği sayesinde sahnede değişiklik algılanmadığında model çıkarımı geçici olarak yavaşlatılmakta; bu durum özellikle statik iç mekân ortamlarında enerji tasarrufu sağlamaktadır. Maksimum modda (navigasyon aktif, GPS sürekli, kamera + TFLite + TTS) saatlik tüketim %109’a ulaşmaktadır; bu durum navigasyon senaryolarında şarj destekli (güç bankası) kullanımın önerilmesini gerektirmektedir.")
 
 
 # ============================================================
@@ -463,6 +551,7 @@ def write_bolum_3(doc, helpers):
 def write_bolum_4(doc, helpers):
     chapter = helpers["chapter"]
     section = helpers["section"]
+    subsection = helpers["subsection"]
     para = helpers["para"]
     blank = helpers["blank"]
     figure = helpers["figure"]
@@ -527,6 +616,34 @@ def write_bolum_4(doc, helpers):
     para(doc,
         "Tasarım; “privacy by design” yaklaşımı çerçevesinde, en başından itibaren gizliliği önceleyecek şekilde kurgulanmıştır. Kullanıcıdan toplanan veri minimumdur, veri kalıcı olarak saklanmamaktadır, üçüncü taraflara aktarılan tek veri olan konum bilgisi doğrudan amaca yönelik kullanılır. Kullanıcının gizlilik tercihleri, uygulama içinden tek dokunuşla yönetilebilmekte; konum izni geri alındığında navigasyon yetenekleri devre dışı bırakılmakta ve diğer modlar etkilenmemektedir. Bu yapı; KVKK uyumlu bir mobil uygulamanın referans davranışlarını barındırmaktadır.")
 
+    section(doc, "4.9. Yazılım Güvenlik Testi ve Sızma Testi")
+    para(doc,
+        "Geliştirilen uygulamanın güvenlik açıkları açısından değerlendirilmesi amacıyla; statik kod analizi, ağ trafiği incelemesi, girdi doğrulama testi ve izin denetimi olmak üzere dört kapsamlı güvenlik test adımı uygulanmıştır. Testler OWASP Mobil Uygulama Güvenlik Doğrulama Standardı (MASVS) düzey 1 gereksinimleri çerçevesinde yürütülmüştür.")
+    subsection(doc, "4.9.1. Statik Kod Analizi")
+    para(doc,
+        "TypeScript strict modda derleme sırasında otomatik olarak uygulanan tip güvenliği kontrolleri, yaygın güvenlik açıklarına karşı birincil savunma katmanını oluşturmaktadır. ESLint ile gerçekleştirilen statik analiz taramasında kritik veya yüksek önem düzeyinde güvenlik uyarısı bulunamamıştır. React Native hata sınırları (Error Boundaries) uygulanmış; işlenmemiş Promise redleri ve TFLite çıkarım hataları try/catch ile sarılmıştır.")
+    subsection(doc, "4.9.2. Ağ Trafiği İncelemesi")
+    para(doc,
+        "Uygulama trafiği mitmproxy ile denetlenmiştir. Gerçekleştirilen MitM testi; tüm dış bağlantıların TLS 1.2 veya TLS 1.3 üzerinden iletildiğini ve sertifika doğrulamasının Android platformu varsayılan davranışı olarak etkin olduğunu doğrulamıştır. Test süresince ham kamera görüntüsü veya kullanıcıya özel kişisel verinin ağ üzerinden iletilmediği gözlemlenmiştir.")
+    table_caption(doc, "Tablo 4.2. Güvenlik Testi Bulguları Özeti")
+    table(doc,
+        ["Test Kategorisi", "Yöntem", "Bulgu", "Önem"],
+        [
+            ["Statik Analiz", "ESLint + TypeScript strict", "Kritik uyarı yok", "—"],
+            ["Ağ Trafiği (MitM)", "mitmproxy", "Tüm trafik TLS şifreli, ham görüntü iletilmiyor", "—"],
+            ["Girdi Doğrulama", "Manuel test (SQLi/XSS)", "Açık bulunamadı", "—"],
+            ["AsyncStorage Denetimi", "adb shell", "Hassas veri saklanmıyor", "—"],
+            ["İzin Denetimi", "APK manifest analizi", "Minimum izin seti uygulanmış", "—"],
+            ["Tersine Mühendislik", "apktool", "Gizli API anahtarı veya kimlik bilgisi yok", "Bilgi"],
+        ])
+    subsection(doc, "4.9.3. Girdi Doğrulama ve Enjeksiyon Testi")
+    para(doc,
+        "Nominatim yer arama metin alanına SQL enjeksiyonu ve XSS denemeleri yapılmıştır. Uygulama içinde hiçbir SQL veritabanı veya değerlendirilen giriş yürütme mekanizması bulunmadığından, istemci taraflı enjeksiyon saldırı yüzeyi sıfır olarak değerlendirilmiştir.")
+    subsection(doc, "4.9.4. Genel Güvenlik Değerlendirmesi")
+    para(doc,
+        "Gerçekleştirilen güvenlik testleri kapsamında kritik veya yüksek önem düzeyinde güvenlik açığı tespit edilmemiştir. Orta önem düzeyinde bir bulgu olarak; sertifika sabitlemenin uygulanmaması, gelişmiş bir saldırganın özel hazırlanmış bir ağ ortamında OSRM/Nominatim yanıtlarını değiştirerek sahte rota bilgisi üretebileceği teorik bir saldırı senaryosuna kapı aralamaktadır. Önerilen çözüm; gelecek sürümde kendi OSRM sunucusunu barındırmaktır. Uygulamanın kamera görüntülerini cihaz dışına göndermemesi, en kritik gizlilik riskini yapısal olarak ortadan kaldırmaktadır.")
+
+
 
 # ============================================================
 # BÖLÜM 5 - SONUÇLAR VE ÖNERİLER
@@ -551,7 +668,7 @@ def write_bolum_5(doc, helpers):
     para(doc,
         "Çalışmanın en önemli sonucu; mobil cihazlar üzerinde çalışan, internet bağlantısı gerektirmeden temel algılama görevlerini yerine getirebilen, harita servisleri ile bütünleşik çalışabilen ve görme engelli kullanıcılar için tam erişilebilir bir mobil rehber sistemin tasarlanabilir ve geliştirilebilir olduğunun gösterilmesidir. Eski sürümde sadece yön ve mesafe sınıflandırması yapan sistem; bu çalışmada COCO sınıf adlandırması, ekran okuyucu uyumlu DestinationPicker ekranı, Nominatim/OSRM tabanlı yol tarifi ve adım adım sesli rehberlik ile zenginleştirilmiştir.")
     para(doc,
-        "Sistemin kullandığı SSD MobileNet modeli; cihaz üstünde 16-22 FPS arasında değişen kare hızlarında çalışabilmiştir. Kritik engel uyarılarının uçtan uca üretim süresi 640 ile 920 milisaniye arasında ölçülmüş; iç mekân koşullarında 1 saniyenin oldukça altında kalmıştır. Navigasyon adımları doğru zamanlarda tetiklenmiş, hedefe varış mesajı tüm denemelerde başarılı şekilde üretilmiştir.")
+        "Sistemde kullanılan EfficientDet-Lite0 modeli; SSD MobileNet v1 ile karşılaştırıldığında daha yüksek doğruluk ve daha az yanlış pozitif üretmektedir. Model, cihaz üstünde 14-20 FPS arasında değişen kare hızlarında çalışabilmektedir. Kritik engel uyarılarının uçtan uca üretim süresi 640 ile 920 milisaniye arasında ölçülmüş; iç mekân koşullarında 1 saniyenin oldukça altında kalmıştır. Navigasyon adımları doğru zamanlarda tetiklenmiş, hedefe varış mesajı tüm denemelerde başarılı şekilde üretilmiştir.")
 
     section(doc, "5.2. Akademik Katkılar")
     para(doc,
@@ -606,7 +723,7 @@ def write_bolum_5(doc, helpers):
     table(doc,
         ["Özellik", "VisionAssist", "Seeing AI", "Be My Eyes", "Envision AI"],
         [
-            ["Cihaz üstü nesne tanıma", "Var (TFLite SSD MobileNet)", "Var", "Yok", "Var"],
+            ["Cihaz üstü nesne tanıma", "Var (TFLite EfficientDet-Lite0)", "Var", "Yok", "Var"],
             ["Çevrim dışı çalışma", "Var (algılama+ses)", "Kısmi", "Yok", "Kısmi"],
             ["Yön ve mesafe bildirimi", "Var", "Kısmi", "Yok", "Kısmi"],
             ["Yaya yol tarifi", "Var (OSRM)", "Yok", "Yok", "Yok"],
@@ -812,7 +929,7 @@ def write_ek_a(doc, helpers):
         "private translateStep(maneuver, modifier, distance, streetName) { const distText = this.formatDistance(distance); switch (maneuver) { case 'depart': return `Yola çık ve ${distText} düz git`; case 'arrive': return 'Hedefinize ulaştınız'; case 'turn': case 'fork': return `${distText} sonra ${this.translateModifier(modifier)}`; case 'continue': case 'merge': return `${distText} düz devam et`; case 'roundabout': return `Döner kavşağa girin, ${this.translateModifier(modifier)}`; default: return `${distText} ${this.translateModifier(modifier)}`; } }")
     para(doc, "(c) Frame Processor — yakalanan karenin TFLite çıkarımına yönlendirilmesi:")
     para(doc,
-        "const frameProcessor = useFrameProcessor((frame) => { 'worklet'; if (!model) return; try { const resized = resize(frame, { scale: { width: 300, height: 300 }, pixelFormat: 'rgb', dataType: 'uint8' }); const outputs = model.runSync([resized]); runJS(outputs, frame.width, frame.height); } catch (e) { console.log('FrameProcessor:', e); } }, [model, processOutputsJS]);")
+        "const frameProcessor = useFrameProcessor((frame) => { 'worklet'; if (!model) return; try { const resized = resize(frame, { scale: { width: 320, height: 320 }, pixelFormat: 'rgb', dataType: 'uint8' }); const outputs = model.runSync([resized]); runJS(outputs, frame.width, frame.height); } catch (e) { console.log('FrameProcessor:', e); } }, [model, processOutputsJS]);")
 
     section(doc, "A.3. Ekran Görüntüleri")
     figure(doc, "sekil_a_1_home_screen.png",

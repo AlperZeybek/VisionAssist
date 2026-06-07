@@ -75,8 +75,53 @@ export const DEFAULT_MIN_CONFIDENCE = 0.50;
 export const TEMPORAL_SMOOTHING_FRAMES = 1;  // 1 = smoothing yok, ilk karede duyur
 
 /**
- * Sokak modunda yüksek öncelikli sınıflar.
- * Bu nesneler MEDIUM mesafede bile sesli uyarı üretir.
+ * MOD BAZLI İZİN VERİLEN SINIFLAR
+ * Her mod yalnızca kendi listesindeki nesneleri duyurur.
+ * Bu sayede iç mekanda trafik lambası, dışarıda yatak duyurulmaz.
+ */
+
+/** İç mekan modu — yalnızca bu sınıflar işlenir */
+export const INDOOR_ALLOWED_LABELS = new Set<string>([
+  'person',        // Evde başka biri olabilir
+  'chair',         // Sandalye — kritik
+  'couch',         // Koltuk — kritik
+  'dining table',  // Yemek masası — kritik
+  'bed',           // Yatak — kritik
+  'toilet',        // Tuvalet
+  'sink',          // Lavabo
+  'potted plant',  // Saksı bitkisi
+  'dog',           // Köpek
+  'refrigerator',  // Buzdolabı
+  'tv',            // Televizyon
+  'laptop',        // Dizüstü bilgisayar
+  'bottle',        // Şişe
+  'cup',           // Bardak
+  'backpack',      // Sırt çantası
+  'suitcase',      // Bavul
+]);
+
+/** Sokak / Navigasyon modu — yalnızca bu sınıflar işlenir */
+export const STREET_ALLOWED_LABELS = new Set<string>([
+  'person',        // Yaya — kritik
+  'bicycle',       // Bisiklet
+  'car',           // Araba — kritik
+  'motorcycle',    // Motosiklet — kritik
+  'bus',           // Otobüs — kritik
+  'truck',         // Kamyon — kritik
+  'traffic light', // Trafik lambası
+  'fire hydrant',  // Yangın musluğu
+  'stop sign',     // Dur işareti
+  'bench',         // Bank
+  'dog',           // Köpek
+  'backpack',      // Sırt çantası
+  'handbag',       // El çantası
+  'umbrella',      // Şemsiye
+  'suitcase',      // Bavul
+  'parking meter', // Parkmetre
+]);
+
+/**
+ * Sokak modunda yüksek öncelikli sınıflar (MEDIUM mesafede de uyarır).
  */
 export const STREET_HIGH_PRIORITY = new Set<string>([
   'person', 'car', 'motorcycle', 'bus', 'truck', 'bicycle',
@@ -93,7 +138,6 @@ export const INDOOR_HIGH_PRIORITY = new Set<string>([
 
 /**
  * Navigasyon modunda sadece NEAR mesafede uyarı verilecek sınıflar.
- * (Navigasyon talimatları kesilmesin diye filtre daha katı.)
  */
 export const NAVIGATION_ALERT_ONLY_NEAR = new Set<string>([
   'chair', 'couch', 'dining table', 'bench', 'potted plant',
