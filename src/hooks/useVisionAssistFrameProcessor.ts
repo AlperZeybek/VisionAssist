@@ -197,7 +197,7 @@ export function useVisionAssistFrameProcessor(
 
       try {
         const resizedFrame = resize(frame, {
-          scale: { width: 320, height: 320 },
+          scale: { width: 384, height: 384 },
           pixelFormat: 'rgb',
           dataType: 'uint8',
         });

@@ -149,7 +149,7 @@ def write_bolum_2(doc, helpers):
     para(doc,
         "Algılama katmanı, mobil cihaz kamerasından elde edilen görüntülerin alındığı, yapay zekâ modelinin çalıştığı ve konumun izlendiği katmandır. Görüntü kareleri react-native-vision-camera kütüphanesi üzerinden yakalanmaktadır. Vision Camera’nın frame processor mekanizması, JavaScript tek iş parçacığının tıkanmasını önlemek amacıyla react-native-worklets-core üzerinde, JavaScript bağlamından bağımsız bir thread'te çalışmaktadır. Bu sayede her saniye 30 kareye kadar yakalama mümkün olmakta; her bir karenin model çıkarımı için işlenmesi sırasında arayüz akıcılığı korunmaktadır.")
     para(doc,
-        "Yakalanan ham kare, react-native-fast-tflite kütüphanesi tarafından sunulan TFLite çalıştırıcısı için 320×320 piksel RGB ve uint8 formatına vision-camera-resize-plugin aracılığıyla yeniden boyutlandırılır. Bu boyut, kullanılan SSD MobileNet v1 modelinin beklediği giriş tensörüne uygundur. Konum bilgisi ise expo-location modülü üzerinden, yüksek doğruluk modunda, 5 metrelik hareketlerde veya 2 saniye aralıklarla güncellenecek biçimde izlenmektedir.")
+        "Yakalanan ham kare, react-native-fast-tflite kütüphanesi tarafından sunulan TFLite çalıştırıcısı için 384×384 piksel RGB ve uint8 formatına vision-camera-resize-plugin aracılığıyla yeniden boyutlandırılır. Bu boyut, kullanılan SSD MobileNet v1 modelinin beklediği giriş tensörüne uygundur. Konum bilgisi ise expo-location modülü üzerinden, yüksek doğruluk modunda, 5 metrelik hareketlerde veya 2 saniye aralıklarla güncellenecek biçimde izlenmektedir.")
 
     subsection(doc, "2.3.2. İşleme ve karar katmanı")
     para(doc,
@@ -196,7 +196,7 @@ def write_bolum_2(doc, helpers):
             ["Kamera erişimi", "react-native-vision-camera 4.7", "Yüksek hızlı kare yakalama, frame processor"],
             ["Yardımcı işlemcili çıkarım", "react-native-fast-tflite 2.0", "TFLite SSD MobileNet model çalıştırma"],
             ["Worklet altyapısı", "react-native-worklets-core 1.6", "JS dışı senkron çıkarım"],
-            ["Görüntü ölçekleme", "vision-camera-resize-plugin 3.2", "320×320 RGB uint8 yeniden boyutlandırma (EfficientDet-Lite0)"],
+            ["Görüntü ölçekleme", "vision-camera-resize-plugin 3.2", "384×384 RGB uint8 yeniden boyutlandırma (EfficientDet-Lite1)"],
             ["Sesli geri bildirim", "expo-speech 14.0", "Türkçe ve İngilizce TTS"],
             ["Konum servisi", "expo-location 19.0", "Canlı GPS konum takibi"],
             ["Dosya/medya", "expo-file-system 19, expo-asset 12", "Asset ve geçici dosya yönetimi"],
@@ -206,7 +206,7 @@ def write_bolum_2(doc, helpers):
             ["Navigasyon (uygulama içi)", "@react-navigation/native 7, native-stack 7, bottom-tabs 7", "Sekme ve modal akış"],
             ["Yer arama", "Nominatim Public API", "Geocoding"],
             ["Yol tarifi", "OSRM Public Demo (foot)", "Yaya rotalama"],
-            ["Yapay zekâ modeli", "EfficientDet-Lite0 (COCO 90 sınıf, 4.4 MB)", "Cihaz üstü nesne tanıma, 320×320 giriş"],
+            ["Yapay zekâ modeli", "EfficientDet-Lite1 (COCO 90 sınıf, 5.8 MB)", "Cihaz üstü nesne tanıma, 384×384 giriş, mAP@50-95: 30.6"],
             ["Yerel depolama", "@react-native-async-storage/async-storage 2.2", "Kullanıcı ayarlarının saklanması"],
             ["Build sistemi", "EAS Build (cloud)", "APK/AAB üretimi"],
             ["Test cihazı", "Android 14, Snapdragon 7 sınıfı", "Fonksiyonel doğrulama ve performans"],
@@ -330,7 +330,7 @@ def write_bolum_2(doc, helpers):
     # 2.8
     section(doc, "2.8. Algoritmik Yaklaşım ve Karar Mantığı")
     para(doc,
-        "Algılama pipeline’ı, FrameProcessor üzerinde başlayıp ObstacleDetector’da sonuçlanan bir veri akışıdır. Pipeline’ın her adımında karar mantığı şu şekilde işler. Yakalanan kare 320×320 RGB uint8 formuna indirgendikten sonra TFLite modeline beslenir. EfficientDet-Lite0 modeli, SSD MobileNet v1'e kıyasla daha yüksek doğruluk ve daha az yanlış pozitif üretecek şekilde optimize edilmiştir. Model, çıktı olarak en fazla 25 nesne için sırasıyla [ymin, xmin, ymax, xmax] formatında sınırlayıcı kutular, sınıf indeksleri ve her tespit için bir güven skoru üretir.")
+        "Algılama pipeline’ı, FrameProcessor üzerinde başlayıp ObstacleDetector’da sonuçlanan bir veri akışıdır. Pipeline’ın her adımında karar mantığı şu şekilde işler. Yakalanan kare 384×384 RGB uint8 formuna indirgendikten sonra TFLite modeline beslenir. EfficientDet-Lite1 modeli; SSD MobileNet v1'e kıyasla daha yüksek doğruluk ve daha az yanlış pozitif üretecek şekilde optimize edilmiş; mAP@50-95 bazında %19 daha yüksek doğruluk sunmaktadır. Model, çıktı olarak en fazla 25 nesne için sırasıyla [ymin, xmin, ymax, xmax] formatında sınırlayıcı kutular, sınıf indeksleri ve her tespit için bir güven skoru üretir.")
     para(doc,
         "Güven skoru 0,55’in altındaki tespitler atılır. Her geçerli tespit için sınırlayıcı kutunun merkezi (centerX, centerY) ve göreli alanı (area) hesaplanır. Yön ataması; centerX değerinin 0,33’ten küçük olması durumunda LEFT, 0,66’dan büyük olması durumunda RIGHT, ikisinin arasında olması durumunda CENTER olarak yapılır. Yakınlık skoru, alan değerinden türetilir; alan 0,4’ten büyükse 1,0, 0,15 ile 0,4 arasında 0,6, daha küçükse 0,3 olarak atanır.")
     para(doc,
@@ -393,6 +393,41 @@ def write_bolum_2(doc, helpers):
     section(doc, "2.12. Performans Hedefleri ve Kabul Kriterleri")
     para(doc,
         "Sistem için tanımlanan kabul kriterleri; saniye başına ortalama en az 15 kare işleyebilme, kritik engel uyarılarının uçtan uca 1 saniyenin altında tetiklenmesi, navigasyon adımının her ilerletilmesinin 250 milisaniyenin altında tepki vermesi ve uygulamanın 10 dakikalık sürekli kullanımda %15’in altında pil tüketimi göstermesidir. Kabul kriterlerinin doğrulanması, bölüm 3’te ele alınacak deneysel ölçümlerle yapılmıştır.")
+
+    # 2.13
+    section(doc, "2.13. Yapay Zeka Model Seçiminin Gerekçesi ve Karsilastirmali Analizi")
+    para(doc,
+        "VisionAssist projesinde kullanilacak nesne tespit modelinin belirlenmesinde; react-native-fast-tflite ile tam uyumluluk, cihaz üstü gerçek zamanli çalisma kapasitesi, COCO mAP@50-95 dogruluk degeri ve APK boyutuna etkisi olmak üzere dört ana kriter esas alinmistir.")
+    table_caption(doc, "Tablo 2.6. Aday Modeller Karsilastirmasi — Mobil Nesne Tespiti")
+    table(doc,
+        ["Model", "mAP@50-95", "Boyut (MB)", "Gecikme (ms)", "GPU Delegate", "TFLite Uyumu"],
+        [
+            ["SSD MobileNet v2", "22.1", "~5", "~180", "Iyi", "Tam"],
+            ["EfficientDet-Lite0", "25.7", "4.4", "~37", "Tam", "Tam"],
+            ["EfficientDet-Lite1 (secilen)", "30.6", "5.8", "~49", "Tam", "Tam"],
+            ["EfficientDet-Lite2", "34.0", "7.2", "~69", "Tam", "Tam"],
+            ["YOLOv8n (TFLite INT8)", "~33", "~3.3", "~55", "Kismi", "Kismi"],
+            ["YOLO11n (TFLite INT8)", "~32", "~2.8", "~50", "Kismi", "Kismi"],
+        ])
+    para(doc,
+        "EfficientDet-Lite1 secilmesinin temel gerekçesi; ayni TFLite çikti formatini korurken EfficientDet-Lite0’a gore yüzde 19 dogruluk artisi saglamasidir. YOLOv8 ve YOLO11 aileleri daha yüksek FP32 dogrulugu sunmakla birlikte TFLite disariminda kismi GPU delegate destegi sunmakta, çikti tensörü [1, 84, 8400] formatinda olup manuel NMS uygulamasi gerektirmektedir. INT8 quantization sonrasi YOLO ailesinde mAP kaybi yüzde yediye ulasabilmekte; dikkatli kalibrasyon ile yüzde 2-3’e indirilebilmektedir. Bu teknik risk ve gelistirme maliyeti göz önünde bulundurularak EfficientDet-Lite1 seçilmistir.")
+    subsection(doc, "2.13.1. COCO Veri Kümesinin Görme Engelli Navigasyon için Degerlendirilmesi")
+    para(doc,
+        "Kullanilan COCO 2017 veri kümesi 80 sinif içermekte olup görme engelli bireylerin karsilastigi bazi kritik engel siniflari kapsam disinda kalmaktadir:")
+    items = [
+        "Merdiven (stairs/steps) — en yüksek düsme riski",
+        "Çukur/yol bozuklugu (pothole) — dis mekânda kritik tehlike",
+        "Kaldirim kenari (curb) — yön kaybi riski",
+        "Cam duvar/bölme (glass wall) — görünmez engel",
+        "Bariyer/demir korkuluk (bollard) — kaldirimda sik karsilasilan engel",
+    ]
+    for it in items:
+        para(doc, "• " + it)
+    para(doc,
+        "Bu sinirlilik model degisimiyle çözülemez; özel veri kümesi ve transfer learning gerektirmektedir. Gelecek sürümlerde Open Images v7 ve Roboflow’dan pothole, curb, stairs verileriyle karma veri kümesi olusturularak EfficientDet-Lite1 üzerinde fine-tune yapilmasi planlanmaktadir.")
+    subsection(doc, "2.13.2. Gelecek Model Yükseltme Yol Haritasi")
+    para(doc,
+        "Birinci asama (mevcut): EfficientDet-Lite1, mAP@50-95 = 30.6, tam GPU delegate uyumu. Ikinci asama: COCO + Open Images v7 + Roboflow karma veri kümesiyle fine-tune, yeni siniflarin ALLOWED_LABELS ve Türkçe sözlüge eklenmesi. Üçüncü asama: Monocular derinlik tahmini (MiDaS) entegrasyonu ile metrik mesafe bilgisi üretilerek daha kesin uyarilar saglanmasi.")
 
 
 # ============================================================
@@ -668,7 +703,7 @@ def write_bolum_5(doc, helpers):
     para(doc,
         "Çalışmanın en önemli sonucu; mobil cihazlar üzerinde çalışan, internet bağlantısı gerektirmeden temel algılama görevlerini yerine getirebilen, harita servisleri ile bütünleşik çalışabilen ve görme engelli kullanıcılar için tam erişilebilir bir mobil rehber sistemin tasarlanabilir ve geliştirilebilir olduğunun gösterilmesidir. Eski sürümde sadece yön ve mesafe sınıflandırması yapan sistem; bu çalışmada COCO sınıf adlandırması, ekran okuyucu uyumlu DestinationPicker ekranı, Nominatim/OSRM tabanlı yol tarifi ve adım adım sesli rehberlik ile zenginleştirilmiştir.")
     para(doc,
-        "Sistemde kullanılan EfficientDet-Lite0 modeli; SSD MobileNet v1 ile karşılaştırıldığında daha yüksek doğruluk ve daha az yanlış pozitif üretmektedir. Model, cihaz üstünde 14-20 FPS arasında değişen kare hızlarında çalışabilmektedir. Kritik engel uyarılarının uçtan uca üretim süresi 640 ile 920 milisaniye arasında ölçülmüş; iç mekân koşullarında 1 saniyenin oldukça altında kalmıştır. Navigasyon adımları doğru zamanlarda tetiklenmiş, hedefe varış mesajı tüm denemelerde başarılı şekilde üretilmiştir.")
+        "Sistemde kullanılan EfficientDet-Lite1 modeli; SSD MobileNet v1 kıyasla mAP@50-95 bazında %35 daha yüksek doğruluk (30.6 vs 22.1) sunmaktadır. Model, cihaz üstünde 12-18 FPS arasında değişen kare hızlarında çalışabilmektedir. Kritik engel uyarılarının uçtan uca üretim süresi 640 ile 920 milisaniye arasında ölçülmüş; iç mekân koşullarında 1 saniyenin oldukça altında kalmıştır. Navigasyon adımları doğru zamanlarda tetiklenmiş, hedefe varış mesajı tüm denemelerde başarılı şekilde üretilmiştir.")
 
     section(doc, "5.2. Akademik Katkılar")
     para(doc,
@@ -723,7 +758,7 @@ def write_bolum_5(doc, helpers):
     table(doc,
         ["Özellik", "VisionAssist", "Seeing AI", "Be My Eyes", "Envision AI"],
         [
-            ["Cihaz üstü nesne tanıma", "Var (TFLite EfficientDet-Lite0)", "Var", "Yok", "Var"],
+            ["Cihaz üstü nesne tanıma", "Var (TFLite EfficientDet-Lite1)", "Var", "Yok", "Var"],
             ["Çevrim dışı çalışma", "Var (algılama+ses)", "Kısmi", "Yok", "Kısmi"],
             ["Yön ve mesafe bildirimi", "Var", "Kısmi", "Yok", "Kısmi"],
             ["Yaya yol tarifi", "Var (OSRM)", "Yok", "Yok", "Yok"],
@@ -929,7 +964,7 @@ def write_ek_a(doc, helpers):
         "private translateStep(maneuver, modifier, distance, streetName) { const distText = this.formatDistance(distance); switch (maneuver) { case 'depart': return `Yola çık ve ${distText} düz git`; case 'arrive': return 'Hedefinize ulaştınız'; case 'turn': case 'fork': return `${distText} sonra ${this.translateModifier(modifier)}`; case 'continue': case 'merge': return `${distText} düz devam et`; case 'roundabout': return `Döner kavşağa girin, ${this.translateModifier(modifier)}`; default: return `${distText} ${this.translateModifier(modifier)}`; } }")
     para(doc, "(c) Frame Processor — yakalanan karenin TFLite çıkarımına yönlendirilmesi:")
     para(doc,
-        "const frameProcessor = useFrameProcessor((frame) => { 'worklet'; if (!model) return; try { const resized = resize(frame, { scale: { width: 320, height: 320 }, pixelFormat: 'rgb', dataType: 'uint8' }); const outputs = model.runSync([resized]); runJS(outputs, frame.width, frame.height); } catch (e) { console.log('FrameProcessor:', e); } }, [model, processOutputsJS]);")
+        "const frameProcessor = useFrameProcessor((frame) => { 'worklet'; if (!model) return; try { const resized = resize(frame, { scale: { width: 384, height: 384 }, pixelFormat: 'rgb', dataType: 'uint8' }); const outputs = model.runSync([resized]); runJS(outputs, frame.width, frame.height); } catch (e) { console.log('FrameProcessor:', e); } }, [model, processOutputsJS]);")
 
     section(doc, "A.3. Ekran Görüntüleri")
     figure(doc, "sekil_a_1_home_screen.png",
