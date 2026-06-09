@@ -999,12 +999,12 @@ def write_ozgecmis(doc, helpers):
 
     section(doc, "Alper ZEYBEK (B221210025)")
     para(doc,
-        "1995 yılında doğdu. Lise eğitimini tamamladıktan sonra 2022 yılında Sakarya Üniversitesi Bilgisayar ve Bilişim Bilimleri Fakültesi Bilgisayar Mühendisliği bölümüne başlamıştır. Lisans öğrenimi süresince mobil uygulama geliştirme, yapay zekâ ve insan-bilgisayar etkileşimi alanlarında çalışmalar yapmıştır. Bu bitirme çalışmasında; sistem mimarisi tasarımı, yapay zekâ modeli entegrasyonu, frame processor optimizasyonu, navigasyon servisi entegrasyonu ile test ve performans ölçümleri sorumluluklarını üstlenmiştir.")
+        "2004 yılında doğdu. Lise eğitimini tamamladıktan sonra 2022 yılında Sakarya Üniversitesi Bilgisayar ve Bilişim Bilimleri Fakültesi Bilgisayar Mühendisliği bölümüne başlamıştır. Lisans öğrenimi süresince mobil uygulama geliştirme, yapay zekâ ve insan-bilgisayar etkileşimi alanlarında çalışmalar yapmıştır. Bu bitirme çalışmasında; sistem mimarisi tasarımı, yapay zekâ modeli entegrasyonu, frame processor optimizasyonu, navigasyon servisi entegrasyonu ile test ve performans ölçümleri sorumluluklarını üstlenmiştir.")
 
     blank(doc, 2)
     section(doc, "Mustafa Alperen AKÇA (B221210014)")
     para(doc,
-        "1996 yılında doğdu. Lise eğitimini tamamladıktan sonra 2022 yılında Sakarya Üniversitesi Bilgisayar ve Bilişim Bilimleri Fakültesi Bilgisayar Mühendisliği bölümüne başlamıştır. Lisans öğrenimi süresince erişilebilir yazılım geliştirme, kullanıcı deneyimi tasarımı ve bulut teknolojileri alanlarında çalışmalar yapmıştır. Bu bitirme çalışmasında; erişilebilirlik analizi, kullanıcı arayüzü ve hedef seçim ekranı tasarımı, sesli geri bildirim mantığı ve dokümantasyon sorumluluklarını üstlenmiştir.")
+        "2004 yılında doğdu. Lise eğitimini tamamladıktan sonra 2022 yılında Sakarya Üniversitesi Bilgisayar ve Bilişim Bilimleri Fakültesi Bilgisayar Mühendisliği bölümüne başlamıştır. Lisans öğrenimi süresince erişilebilir yazılım geliştirme, kullanıcı deneyimi tasarımı ve bulut teknolojileri alanlarında çalışmalar yapmıştır. Bu bitirme çalışmasında; erişilebilirlik analizi, kullanıcı arayüzü ve hedef seçim ekranı tasarımı, sesli geri bildirim mantığı ve dokümantasyon sorumluluklarını üstlenmiştir.")
 
 
 # ============================================================
