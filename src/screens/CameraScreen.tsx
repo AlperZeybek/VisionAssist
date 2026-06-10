@@ -47,6 +47,7 @@ export default function CameraScreen() {
   } = useNavigationContext();
 
   const [isActive, setIsActive] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
   const [obstacles, setObstacles] = useState<ObstacleInfo[]>([]);
 
   const { model, state: modelState, labels } = useMLModel();
@@ -86,11 +87,6 @@ export default function CameraScreen() {
     }
   }, [isActive]);
 
-  const emergencyStop = useCallback(() => {
-    setIsActive(false);
-    speechService.stop();
-    setObstacles([]);
-  }, []);
 
   // ── İzin Ekranı ────────────────────────────────────────────────
   if (!hasPermission) {
@@ -137,6 +133,7 @@ export default function CameraScreen() {
           style={StyleSheet.absoluteFill}
           device={device}
           isActive={true}
+          torch={torchOn ? 'on' : 'off'}
           frameProcessor={frameProcessor}
         />
 
@@ -195,7 +192,7 @@ export default function CameraScreen() {
             style={styles.iconButton}
             onPress={() => {
               if (isActive && obstacles.length > 0) {
-                const top = obstacles[0];
+                const top = [...obstacles].sort((a, b) => (b.proximityScore ?? 0) - (a.proximityScore ?? 0))[0];
                 speechService.speak(getObstacleMessage(top, settings.language), top.riskLevel);
               }
             }}
@@ -225,11 +222,11 @@ export default function CameraScreen() {
 
           {/* Fener */}
           <TouchableOpacity
-            style={styles.iconButton}
-            onPress={emergencyStop}
+            style={[styles.iconButton, torchOn && styles.iconButtonActive]}
+            onPress={() => setTorchOn(t => !t)}
             accessible
             accessibilityRole="button"
-            accessibilityLabel="Acil durdur"
+            accessibilityLabel={torchOn ? 'Feneri kapat' : 'Feneri aç'}
           >
             <Text style={styles.iconButtonText}>🔦</Text>
           </TouchableOpacity>
@@ -370,6 +367,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  iconButtonActive: {
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
   },
   iconButtonText: { fontSize: 26 },
   iconButtonLarge: {
