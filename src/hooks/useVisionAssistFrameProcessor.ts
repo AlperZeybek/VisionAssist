@@ -109,8 +109,15 @@ export function useVisionAssistFrameProcessor(
         const rawYMax = boxes[i * 4 + 2];
         const rawXMax = boxes[i * 4 + 3];
 
+        const bboxWidth  = Math.abs(rawXMax - rawXMin);
+        const bboxHeight = Math.abs(rawYMax - rawYMin);
         const centerX = (rawXMin + rawXMax) / 2;
-        const area = Math.abs(rawXMax - rawXMin) * Math.abs(rawYMax - rawYMin);
+        const area = bboxWidth * bboxHeight;
+
+        // İnsan tespitinde boyut oranı filtresi:
+        // Gerçek bir insan en az yüksekliği kadar dar olmalıdır.
+        // Yatay veya kare kutu → muhtemelen yanlış pozitif.
+        if (label === 'person' && bboxHeight < bboxWidth * 0.8) continue;
 
         // Yön
         let dir = Direction.CENTER;

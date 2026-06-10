@@ -39,7 +39,8 @@ export const ALLOWED_LABELS = new Set<string>([
  */
 export const PER_CLASS_MIN_CONFIDENCE: Record<string, number> = {
   // ── Dışarıda kritik (araçlar, yayalar) ───────────────────────────────────
-  person:          0.50,
+  // person yüksek eşik: yanlış pozitifi azaltmak için 0.50 → 0.63
+  person:          0.63,
   car:             0.50,
   motorcycle:      0.50,
   bus:             0.50,
@@ -47,14 +48,14 @@ export const PER_CLASS_MIN_CONFIDENCE: Record<string, number> = {
   bicycle:         0.52,
 
   // ── İÇ MEKAN KRİTİK engeller — düşük eşik, kaçırma çok tehlikeli ────────
-  chair:           0.45,   // Sandalye — en sık iç mekan engeli
-  couch:           0.48,   // Koltuk
-  'dining table':  0.45,   // Masa
-  bed:             0.48,   // Yatak
-  'potted plant':  0.50,   // Saksı bitkisi
+  chair:           0.40,   // Sandalye — düşürüldü, kaçırma önlendi
+  couch:           0.42,   // Koltuk — düşürüldü
+  'dining table':  0.40,   // Masa — düşürüldü
+  bed:             0.45,   // Yatak
+  'potted plant':  0.48,   // Saksı bitkisi
 
-  // ── Sık yanlış pozitif veren sınıflar — makul yüksek eşik ────────────────
-  toilet:          0.78,   // Sandalyeyle karışabilir ama %78 güven gerçektir
+  // ── Sık yanlış pozitif veren sınıflar — yüksek eşik korundu ─────────────
+  toilet:          0.78,
   sink:            0.65,
   refrigerator:    0.60,
   microwave:       0.60,
@@ -62,7 +63,7 @@ export const PER_CLASS_MIN_CONFIDENCE: Record<string, number> = {
   // ── Diğerleri ─────────────────────────────────────────────────────────────
   dog:             0.55,
   'traffic light': 0.50,
-  bench:           0.52,
+  bench:           0.50,
   backpack:        0.55,
   umbrella:        0.55,
   suitcase:        0.55,
@@ -72,7 +73,7 @@ export const PER_CLASS_MIN_CONFIDENCE: Record<string, number> = {
 export const DEFAULT_MIN_CONFIDENCE = 0.50;
 
 /** Temporal smoothing — kaç ardışık karede görünmeli (duyurmadan önce) */
-export const TEMPORAL_SMOOTHING_FRAMES = 1;  // 1 = smoothing yok, ilk karede duyur
+export const TEMPORAL_SMOOTHING_FRAMES = 2;  // 2 = 2 ardışık kare gerekli → false positive azalır
 
 /**
  * MOD BAZLI İZİN VERİLEN SINIFLAR
