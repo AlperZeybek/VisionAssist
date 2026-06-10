@@ -37,14 +37,14 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_GAP = SPACING.sm;
 const CARD_WIDTH = (SCREEN_WIDTH - SPACING.lg * 2 - GRID_GAP) / 2;
 
-/** Kategori renk ve ikon eşlemesi (görseldeki renklerle uyumlu) */
+/** Kategori renk ve ikon eşlemesi */
 const CATEGORY_STYLE: Record<string, { bg: string; iconBg: string }> = {
-  pharmacy:  { bg: '#0F2A1A', iconBg: '#1B7A3A' },
-  hospital:  { bg: '#2A0F0F', iconBg: '#CC2222' },
-  market:    { bg: '#2A1A00', iconBg: '#CC6600' },
-  bus_stop:  { bg: '#0A1A2A', iconBg: '#1155CC' },
-  cafe:      { bg: '#1A120A', iconBg: '#7A4A00' },
-  park:      { bg: '#0F1E0F', iconBg: '#226622' },
+  pharmacy:  { bg: '#16A34A', iconBg: '#22C55E' },
+  hospital:  { bg: '#DC2626', iconBg: '#EF4444' },
+  market:    { bg: '#EA580C', iconBg: '#FB923C' },
+  bus_stop:  { bg: '#2563EB', iconBg: '#60A5FA' },
+  cafe:      { bg: '#B45309', iconBg: '#F59E0B' },
+  park:      { bg: '#15803D', iconBg: '#4ADE80' },
 };
 
 export default function DestinationPickerScreen() {
@@ -359,28 +359,29 @@ const styles = StyleSheet.create({
   },
   gridCard: {
     width: CARD_WIDTH,
-    minHeight: MIN_TOUCH_SIZE + 24,
-    borderRadius: 14,
+    minHeight: MIN_TOUCH_SIZE + 40,
+    borderRadius: 16,
     padding: SPACING.md,
     justifyContent: 'center',
     alignItems: 'center',
     gap: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
   gridIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  gridIcon: { fontSize: 22 },
+  gridIcon: { fontSize: 26 },
   gridLabel: {
-    color: COLORS.textPrimary,
-    fontSize: FONT_SIZES.small - 2,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontSize: FONT_SIZES.small,
+    fontWeight: '800',
     textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.35)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 
   // Arama
