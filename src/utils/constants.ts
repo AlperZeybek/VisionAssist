@@ -40,7 +40,7 @@ export const ALLOWED_LABELS = new Set<string>([
 export const PER_CLASS_MIN_CONFIDENCE: Record<string, number> = {
   // ── Dışarıda kritik (araçlar, yayalar) ───────────────────────────────────
   // person yüksek eşik: yanlış pozitifi azaltmak için 0.50 → 0.63
-  person:          0.63,
+  person:          0.52,
   car:             0.50,
   motorcycle:      0.50,
   bus:             0.50,
